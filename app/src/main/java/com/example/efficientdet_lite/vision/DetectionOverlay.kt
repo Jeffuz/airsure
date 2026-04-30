@@ -1,7 +1,8 @@
-package com.example.efficientdet_lite
+package com.example.efficientdet_lite.vision
 
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,7 +33,7 @@ fun DetectionOverlay(
         val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.WHITE
             textSize = 34f
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            typeface = Typeface.DEFAULT_BOLD
         }
         val labelBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.argb(220, 24, 30, 36)

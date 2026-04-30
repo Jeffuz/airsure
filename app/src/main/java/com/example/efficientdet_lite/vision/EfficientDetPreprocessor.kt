@@ -1,4 +1,4 @@
-package com.example.efficientdet_lite
+package com.example.efficientdet_lite.vision
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -10,6 +10,7 @@ import android.graphics.Rect
 import android.graphics.YuvImage
 import androidx.camera.core.ImageProxy
 import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
 import kotlin.math.min
 
 object EfficientDetPreprocessor {
@@ -90,7 +91,7 @@ object EfficientDetPreprocessor {
     }
 
     private fun copyPlane(
-        buffer: java.nio.ByteBuffer,
+        buffer: ByteBuffer,
         rowStride: Int,
         pixelStride: Int,
         width: Int,
