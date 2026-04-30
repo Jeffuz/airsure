@@ -1,6 +1,5 @@
-package com.example.efficientdet_lite
+package com.example.efficientdet_lite.vision
 
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy

@@ -1,4 +1,4 @@
-package com.example.efficientdet_lite
+package com.example.efficientdet_lite.vision
 
 import android.Manifest
 import android.content.pm.PackageManager

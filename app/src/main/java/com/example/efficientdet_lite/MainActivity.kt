@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.efficientdet_lite.ui.theme.EfficientDETLiteTheme
+import com.example.efficientdet_lite.vision.EfficientDetCameraScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

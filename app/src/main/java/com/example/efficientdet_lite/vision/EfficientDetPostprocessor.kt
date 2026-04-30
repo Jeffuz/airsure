@@ -1,7 +1,8 @@
-package com.example.efficientdet_lite
+package com.example.efficientdet_lite.vision
 
 import android.graphics.RectF
 import android.util.Log
+import kotlin.collections.plusAssign
 import kotlin.math.roundToInt
 
 class EfficientDetPostprocessor(
@@ -65,7 +66,7 @@ class EfficientDetPostprocessor(
             val classIndex = classes[index].roundToInt()
             val label = labels.getOrElse(classIndex) { "class $classIndex" }
             if (label == "N/A") continue
-            detections += Detection(
+            detections plusAssign Detection(
                 box = RectF(left, top, right, bottom),
                 label = label,
                 confidence = score,
