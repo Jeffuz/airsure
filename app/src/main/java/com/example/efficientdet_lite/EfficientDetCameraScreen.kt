@@ -39,6 +39,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.efficientdet_lite.audio.AudioDebugViewModel
+import com.example.efficientdet_lite.ui.components.AudioVisualizer
 import java.util.concurrent.Executors
 
 @Composable
@@ -62,13 +65,21 @@ fun EfficientDetCameraScreen() {
     var hasCameraPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        hasCameraPermission = granted
+    var hasAudioPermission by remember {
+        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+        hasCameraPermission = results[Manifest.permission.CAMERA] ?: hasCameraPermission
+        hasAudioPermission = results[Manifest.permission.RECORD_AUDIO] ?: hasAudioPermission
     }
 
     LaunchedEffect(Unit) {
-        if (!hasCameraPermission) {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
+        val permissionsToRequest = mutableListOf<String>()
+        if (!hasCameraPermission) permissionsToRequest.add(Manifest.permission.CAMERA)
+        if (!hasAudioPermission) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        
+        if (permissionsToRequest.isNotEmpty()) {
+            permissionLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 
@@ -153,6 +164,21 @@ fun EfficientDetCameraScreen() {
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center),
             )
+        }
+
+        // Audio Debug UI
+        if (hasAudioPermission) {
+            val audioViewModel: AudioDebugViewModel = viewModel()
+            Surface(
+                color = Color.White.copy(alpha = 0.8f),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(16.dp)
+                    .width(200.dp)
+            ) {
+                AudioVisualizer(viewModel = audioViewModel)
+            }
         }
 
         Surface(

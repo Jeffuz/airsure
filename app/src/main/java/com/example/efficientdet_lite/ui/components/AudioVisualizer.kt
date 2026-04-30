@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.efficientdet_lite.audio.AudioDebugViewModel
 
@@ -23,16 +24,32 @@ fun AudioVisualizer(viewModel: AudioDebugViewModel) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Audio Debugger", style = MaterialTheme.typography.titleMedium)
+        Text(text = "Whisper AI Test", style = MaterialTheme.typography.titleMedium)
         
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Transcription Result Box
+        Surface(
+            color = Color.Black.copy(alpha = 0.1f),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp)
+        ) {
+            Text(
+                text = viewModel.transcription,
+                modifier = Modifier.padding(8.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
         
         // Visual bar representing amplitude
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(20.dp)
-                .background(Color.LightGray, RoundedCornerShape(10.dp))
+                .height(12.dp)
+                .background(Color.LightGray, RoundedCornerShape(6.dp))
         ) {
             Box(
                 modifier = Modifier
@@ -40,7 +57,7 @@ fun AudioVisualizer(viewModel: AudioDebugViewModel) {
                     .fillMaxHeight()
                     .background(
                         if (animatedAmplitude > 0.8f) Color.Red else Color.Green,
-                        RoundedCornerShape(10.dp)
+                        RoundedCornerShape(6.dp)
                     )
             )
         }
@@ -48,14 +65,13 @@ fun AudioVisualizer(viewModel: AudioDebugViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
         
         Button(onClick = { viewModel.toggleRecording() }) {
-            Text(if (viewModel.isRecording) "Stop Mic Test" else "Start Mic Test")
+            Text(if (viewModel.isRecording) "Stop Listening" else "Start Whisper Test")
         }
-        
-        if (viewModel.isRecording) {
-            Text(
-                text = "Amplitude: ${(animatedAmplitude * 100).toInt()}%",
-                style = MaterialTheme.typography.bodySmall
-            )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(onClick = { viewModel.runAssetTest() }) {
+            Text("Run Asset (.wav) Test")
         }
     }
 }

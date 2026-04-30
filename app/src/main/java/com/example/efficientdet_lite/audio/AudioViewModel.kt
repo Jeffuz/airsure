@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AudioViewModel(application: Application) : AndroidViewModel(application) {
     private val audioRecorder = AudioRecorder()
@@ -27,22 +28,40 @@ class AudioViewModel(application: Application) : AndroidViewModel(application) {
     var isRecording by mutableStateOf(false)
         private set
 
+    private val pendingAudio = mutableListOf<Float>()
+    private val targetSamples = 16000 * 5 // 5 seconds of audio at 16kHz
+
     fun startListening() {
         if (isRecording) return
         isRecording = true
         transcription = "Listening..."
+        pendingAudio.clear()
         
         recordingJob = viewModelScope.launch(Dispatchers.Default) {
-            audioRecorder.startRecording().collect { buffer ->
-                // In a real app, we would accumulate buffer until we have ~1-3s of audio
-                // For this step, we'll just try to transcribe the current chunk
-                val result = whisperModel.transcribe(buffer)
+            audioRecorder.startRecording().collect { chunk ->
+                pendingAudio.addAll(chunk.toList())
                 
-                launch(Dispatchers.Main) {
-                    if (result.isNotBlank() && result != "Transcription placeholder") {
-                        transcription = result
-                        val announcement = parser.parse(result)
-                        lastAnnouncement = announcement
+                if (pendingAudio.size >= targetSamples) {
+                    val audioForModel = pendingAudio.take(targetSamples).toFloatArray()
+                    // Clear some audio, but keep a small overlap (e.g. 1s) for continuity
+                    val overlap = 16000 * 1
+                    val remaining = if (pendingAudio.size > targetSamples) {
+                        pendingAudio.subList(targetSamples - overlap, pendingAudio.size).toList()
+                    } else emptyList()
+                    
+                    pendingAudio.clear()
+                    pendingAudio.addAll(remaining)
+
+                    val result = whisperModel.transcribe(audioForModel)
+                    
+                    withContext(Dispatchers.Main) {
+                        if (result.isNotBlank() && result != "No speech detected") {
+                            transcription = result
+                            val announcement = parser.parse(result)
+                            if (announcement != null) {
+                                lastAnnouncement = announcement
+                            }
+                        }
                     }
                 }
             }
@@ -53,6 +72,7 @@ class AudioViewModel(application: Application) : AndroidViewModel(application) {
         isRecording = false
         recordingJob?.cancel()
         transcription = ""
+        pendingAudio.clear()
     }
 
     override fun onCleared() {
