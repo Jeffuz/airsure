@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.efficientdet_lite.announcements.AnnouncementScreen
 import com.example.efficientdet_lite.announcements.CarryOnScannerScreen
 import com.example.efficientdet_lite.ui.HomeScreen
+import com.example.efficientdet_lite.ui.SplashScreen
 
 @Composable
 fun AirSureNavHost() {
@@ -14,8 +15,21 @@ fun AirSureNavHost() {
 
     NavHost(
         navController = navController,
-        startDestination = Routes.HOME
+        startDestination = Routes.SPLASH
     ) {
+
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onFinished = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.SPLASH) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
+        }
+
         composable(Routes.HOME) {
             HomeScreen(
                 onScanCarryOnClick = {
