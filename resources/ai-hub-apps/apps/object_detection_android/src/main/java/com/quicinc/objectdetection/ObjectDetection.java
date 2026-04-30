@@ -53,8 +53,8 @@ public class ObjectDetection implements AutoCloseable {
     private final NMS nmsProcessor;
 
     private final static float INVALID_ANCHOR = -10000.0f;
-    private final float scoreThreshold = 0.20f;
-    private final int maxDetections = 20;
+    private final float scoreThreshold = 0.50f;
+    private final int maxDetections = 10;
 
     public ObjectDetection(Context context,
                            String modelPath,
@@ -187,17 +187,16 @@ public class ObjectDetection implements AutoCloseable {
             float[] scoresData = outputBuffers.size() > 1 ? outputBuffers.get(1).readFloat() : boxesData;
 
             for (int i = 0; i < numAnchors; i++) {
-                float maxScore = -20f;
+                float maxScore = -1000f;
                 int maxClass = -1;
 
                 for (int c = 0; c < numClasses; c++) {
                     float score;
                     if (outputBuffers.size() > 1) {
-                        // Scores are in a separate buffer [1, 8400, numClasses] or [1, numClasses, 8400]
-                        // Standard AI Hub format for separate scores is usually [1, 8400, numClasses]
+                        // Channels Last: [1, 8400, numClasses]
                         score = scoresData[i * numClasses + c];
                     } else {
-                        // Combined buffer [1, 4 + numClasses, 8400]
+                        // Combined Planar: [1, 4 + 80, 8400]
                         score = scoresData[(c + 4) * numAnchors + i];
                     }
                     
@@ -212,31 +211,63 @@ public class ObjectDetection implements AutoCloseable {
                     continue;
                 }
 
+                // AI Hub YOLO models usually have the sigmoid already applied in the TFLite graph.
+                // If the values are > 1 or < 0, then they are raw logits.
                 float confidence = maxScore;
-                if (maxScore > 1.0f || maxScore < -1.0f) {
-                    confidence = (float) (1.0 / (1.0 + Math.exp(-maxScore)));
+                if (maxScore > 1.0f || maxScore < 0.0f) {
+                    // Only apply sigmoid if it looks like a raw logit (not 0, which is likely background)
+                    if (maxScore == 0.0f) {
+                        confidence = 0.0f;
+                    } else {
+                        confidence = (float) (1.0 / (1.0 + Math.exp(-maxScore)));
+                    }
                 }
 
                 if (confidence >= scoreThreshold) {
-                    float cx, cy, w, h;
+                    float x0_raw, y0_raw, x1_raw, y1_raw;
                     if (outputBuffers.size() > 1) {
-                        // Boxes in [1, 8400, 4]
-                        cx = (boxesData[i * 4] - padX) / ratio;
-                        cy = (boxesData[i * 4 + 1] - padY) / ratio;
-                        w = boxesData[i * 4 + 2] / ratio;
-                        h = boxesData[i * 4 + 3] / ratio;
+                        // Channels Last Boxes: [1, 8400, 4]
+                        float b0 = boxesData[i * 4];
+                        float b1 = boxesData[i * 4 + 1];
+                        float b2 = boxesData[i * 4 + 2];
+                        float b3 = boxesData[i * 4 + 3];
+
+                        // Handle both XYXY and CXCYWH
+                        if (b2 < b0 || b3 < b1) { // Likely CXCYWH
+                            x0_raw = b0 - b2 / 2f;
+                            y0_raw = b1 - b3 / 2f;
+                            x1_raw = b0 + b2 / 2f;
+                            y1_raw = b1 + b3 / 2f;
+                        } else { // Likely XYXY
+                            x0_raw = b0;
+                            y0_raw = b1;
+                            x1_raw = b2;
+                            y1_raw = b3;
+                        }
                     } else {
-                        // Boxes in [1, 4, 8400]
-                        cx = (boxesData[i] - padX) / ratio;
-                        cy = (boxesData[numAnchors + i] - padY) / ratio;
-                        w = boxesData[2 * numAnchors + i] / ratio;
-                        h = boxesData[3 * numAnchors + i] / ratio;
+                        // Combined Planar: [1, 4 + 80, 8400]
+                        float cx = boxesData[i];
+                        float cy = boxesData[numAnchors + i];
+                        float w = boxesData[2 * numAnchors + i];
+                        float h = boxesData[3 * numAnchors + i];
+                        x0_raw = cx - w / 2f;
+                        y0_raw = cy - h / 2f;
+                        x1_raw = cx + w / 2f;
+                        y1_raw = cy + h / 2f;
                     }
 
-                    float x0 = cx - w / 2f;
-                    float y0 = cy - h / 2f;
-                    float x1 = cx + w / 2f;
-                    float y1 = cy + h / 2f;
+                    // Scale to pixels if normalized
+                    if (x1_raw <= 1.01f && y1_raw <= 1.01f && x1_raw > 0) {
+                        x0_raw *= 640f;
+                        y0_raw *= 640f;
+                        x1_raw *= 640f;
+                        y1_raw *= 640f;
+                    }
+
+                    float x0 = (x0_raw - padX) / ratio;
+                    float y0 = (y0_raw - padY) / ratio;
+                    float x1 = (x1_raw - padX) / ratio;
+                    float y1 = (y1_raw - padY) / ratio;
 
                     this.scores[i] = confidence;
                     this.classIdx[i] = maxClass;
