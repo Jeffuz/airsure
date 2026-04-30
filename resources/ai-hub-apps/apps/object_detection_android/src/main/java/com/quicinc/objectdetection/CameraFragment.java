@@ -34,6 +34,9 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.speech.tts.TextToSpeech;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
@@ -44,8 +47,11 @@ import org.opencv.android.OpenCVLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -142,11 +148,17 @@ public class CameraFragment extends Fragment
 
     };
 
-    public static CameraFragment create(ObjectDetection detector) {
+    public static CameraFragment create(ObjectDetection detector, String country) {
         final CameraFragment fragment = new CameraFragment();
         fragment.detector = detector;
+        fragment.selectedCountry = country;
         return fragment;
     }
+
+    private String selectedCountry;
+    private TextToSpeech tts;
+    private Set<String> announcedLabels = new HashSet<>();
+    private long lastAnnouncementTime = 0;
 
     /**
      * An additional thread for running tasks that shouldn't block the UI.
@@ -226,6 +238,13 @@ public class CameraFragment extends Fragment
                     }
                 }
         );
+
+        tts = new TextToSpeech(requireContext(), status -> {
+            if (status != TextToSpeech.ERROR) {
+                tts.setLanguage(Locale.US);
+            }
+        });
+
         return inflater.inflate(R.layout.fragment_camera, container, false);
     }
 
@@ -262,6 +281,10 @@ public class CameraFragment extends Fragment
 
     @Override
     public void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
         stopBackgroundThread();
         closeCamera();
         super.onDestroy();
@@ -580,6 +603,23 @@ public class CameraFragment extends Fragment
 
     private boolean isProcessing = false;
 
+    private void triggerVibration() {
+        Activity activity = getActivity();
+        if (activity != null) {
+            Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator != null && vibrator.hasVibrator()) {
+                vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE));
+            }
+        }
+    }
+
+    private void announceItem(String label, String message) {
+        if (tts != null) {
+            String text = label + ". " + message;
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+        }
+    }
+
     private class CameraSession extends android.hardware.camera2.CameraCaptureSession.CaptureCallback {
 
         @Override
@@ -599,8 +639,9 @@ public class CameraFragment extends Fragment
             }
 
             if (detector != null && !isProcessing) {
-                // Save camera feed to Bitmap at the model's native resolution (MUCH FASTER)
-                Bitmap mBitmap = mTextureView.getBitmap(detector.getInputWidth(), detector.getInputHeight());
+                // Get the bitmap from TextureView. We don't specify size to avoid stretching.
+                // The preprocessing in detector.predict will handle the letterbox resize.
+                Bitmap mBitmap = mTextureView.getBitmap();
                 if (mBitmap == null) {
                     return;
                 }
@@ -619,6 +660,32 @@ public class CameraFragment extends Fragment
 
                     detector.predict(mBitmap, orient, BBlist);
                     
+                    // Add travel restrictions based on selected country
+                    boolean dangerDetected = false;
+                    for (RectangleBox box : BBlist) {
+                        box.travelInfo = RestrictionManager.getRestriction(box.label, selectedCountry);
+                        if (box.travelInfo.level == RestrictionManager.Level.DANGER) {
+                            dangerDetected = true;
+                        }
+                        
+                        // TTS Announcement logic
+                        long currentTime = System.currentTimeMillis();
+                        if (currentTime - lastAnnouncementTime > 3000) { // Every 3 seconds max
+                            if (!announcedLabels.contains(box.label)) {
+                                announceItem(box.label, box.travelInfo.message);
+                                announcedLabels.add(box.label);
+                                lastAnnouncementTime = currentTime;
+                                
+                                // Limit history size
+                                if (announcedLabels.size() > 5) announcedLabels.clear();
+                            }
+                        }
+                    }
+                    
+                    if (dangerDetected) {
+                        triggerVibration();
+                    }
+                    
                     activity.runOnUiThread(() -> {
                         mFragmentRender.setCoordsList(BBlist);
                         mFragmentRender.render(
@@ -628,7 +695,8 @@ public class CameraFragment extends Fragment
                                 detector.getLastInferenceTime(),
                                 detector.getLastPreprocessingTime(),
                                 detector.getLastPostprocessingTime(),
-                                displayRotation);
+                                displayRotation,
+                                selectedCountry);
                         isProcessing = false;
                     });
                 });

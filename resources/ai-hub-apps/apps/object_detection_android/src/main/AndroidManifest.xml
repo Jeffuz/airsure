@@ -3,6 +3,7 @@
     package="com.quicinc.objectdetection">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-feature android:name="android.hardware.camera" />
     <application
         android:configChanges="orientation|screenSize"
@@ -24,15 +25,19 @@
             android:name="libOpenCL.so"
             android:required="false"/>
 
+        <activity android:name="com.quicinc.objectdetection.CountrySelectionActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="com.quicinc.objectdetection.MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize"
             android:screenOrientation="unspecified">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
     </application>
 

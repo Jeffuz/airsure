@@ -19,6 +19,7 @@ public class RectangleBox {
 
     public int classIdx;
     public String label;
+    public RestrictionManager.TravelInfo travelInfo;
     public float confidence;
     public static ArrayList<RectangleBox> createBoxes(int num) {
         final ArrayList<RectangleBox> boxes;

@@ -1,5 +1,7 @@
 <resources>
-<string name="app_name">Object Detector</string>
-    <string name="request_permission">This app needs camera permission</string>
-<string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="app_name">AIrsure</string>
+    <string name="request_permission">AIrsure needs camera permission to identify travel items.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="app_header">AIrsure</string>
+    <string name="device_tag">Safe Travel Assistant</string>
 </resources>

@@ -29,12 +29,18 @@ public class MainActivity extends AppCompatActivity {
     ExecutorService backgroundTaskExecutor = Executors.newSingleThreadExecutor();
     Handler mainLooperHandler = new Handler(Looper.getMainLooper());
 
+    private String selectedCountry = "United States";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         progressBar = (ProgressBar)findViewById(R.id.indeterminateBar);
+
+        if (getIntent().hasExtra("SELECTED_COUNTRY")) {
+            selectedCountry = getIntent().getStringExtra("SELECTED_COUNTRY");
+        }
 
         // Load model
         createTFLiteClassifiersAsync();
@@ -55,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         if (passToFragment) {
             if (detector != null) {
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                transaction.add(R.id.main_content, CameraFragment.create(detector));
+                transaction.add(R.id.main_content, CameraFragment.create(detector, selectedCountry));
                 transaction.commitAllowingStateLoss();
             }
         } else {
@@ -88,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                         this,
                         tfLiteModelAsset,
                         tfLiteLabelsAsset,
-                        AIHubDefaults.delegatePriorityOrder /* AI Hub Defaults */
+                        AIHubDefaults.acceleratorPriorityOrder /* AI Hub Defaults */
                 );
             } catch (IOException | NoSuchAlgorithmException e) {
                 throw new RuntimeException(e.getMessage());

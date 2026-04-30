@@ -45,6 +45,9 @@ public class FragmentRender extends View {
     private Paint mTextPaint = new Paint();
     private Paint mLabelFramePaint = new Paint();
 
+    private String mSelectedCountry = "";
+    private Paint mRestrictionPaint = new Paint();
+
     public static @ColorInt int labelColor(int label, int alpha) {
         // Generic colors that do not correspond to a dataset
         final int[] baseColors = new int[]{
@@ -85,6 +88,11 @@ public class FragmentRender extends View {
         mTextColor.setTypeface(Typeface.DEFAULT_BOLD);
         mTextColor.setStyle(Paint.Style.FILL);
         mTextColor.setTextSize(50);
+
+        mRestrictionPaint.setColor(Color.WHITE);
+        mRestrictionPaint.setTypeface(Typeface.DEFAULT);
+        mRestrictionPaint.setStyle(Paint.Style.FILL);
+        mRestrictionPaint.setTextSize(28);
     }
 
     public void setCoordsList(ArrayList<RectangleBox> t_boxlist) {
@@ -104,7 +112,7 @@ public class FragmentRender extends View {
         postInvalidate();
     }
 
-    public void render(Bitmap image, Size cameraSize, float fps, long inferTime, long preprocessTime, long postprocessTime, int displayRotation)
+    public void render(Bitmap image, Size cameraSize, float fps, long inferTime, long preprocessTime, long postprocessTime, int displayRotation, String country)
     {
         this.mBitmap = image;
         this.mCameraSize = cameraSize;
@@ -113,6 +121,7 @@ public class FragmentRender extends View {
         this.preprocessTime = preprocessTime;
         this.postprocessTime = postprocessTime;
         this.mDisplayRotation = displayRotation;
+        this.mSelectedCountry = country;
         postInvalidate();
     }
 
@@ -192,51 +201,101 @@ public class FragmentRender extends View {
             mTargetRect.bottom = offsetHeight + insetHeight;
 
             canvas.save();
+            // We use the transform only for the bitmap to handle screen rotation/fit
             canvas.concat(mTransform);
             canvas.drawBitmap(mBitmap, null, mTargetRect, null);
             canvas.restore();
 
-            // Useful for debugging
-            // canvas.drawText("FPS: " + String.format("%.0f", fps), 15, 50, mTextColor);
-            // canvas.drawText("Preprocess: " + String.format("%.0f", (float)preprocessTime / 1_000_000) + "ms", 15, 55 + 60 * 2, mTextColor);
-            // canvas.drawText("Infer: " + String.format("%.0f", (float)inferTime / 1_000_000) + "ms", 15, 55 + 60 * 3, mTextColor);
-            // canvas.drawText("Postprocess: " + String.format("%.0f", (float)postprocessTime / 1_000_000) + "ms", 15, 55 + 60 * 4, mTextColor);
-            for(int j=0;j<boxlist.size();j++) {
+            // Draw header with selected country
+            String header = "Destination: " + mSelectedCountry;
+            mTextPaint.setTextSize(45);
+            mTextPaint.setColor(Color.YELLOW);
+            canvas.drawText(header, 50, 100, mTextPaint);
 
+            // Draw boxes in screen space (not transformed) to avoid double-scaling
+            for(int j=0;j<boxlist.size();j++) {
                 RectangleBox rbox = boxlist.get(j);
 
-                float[] p0 = new float[] {rbox.left, rbox.top};
-                float[] p1 = new float[] {rbox.right, rbox.bottom};
-                mTransform.mapPoints(p0);
-                mTransform.mapPoints(p1);
-
-                float left = Math.min(p0[0], p1[0]);
-                float upper = Math.min(p0[1], p1[1]);
+                // Map from bitmap pixels [0, 640] to screen pixels using the target rect
+                float left = mTargetRect.left + (rbox.left * mTargetRect.width() / mBitmap.getWidth());
+                float top = mTargetRect.top + (rbox.top * mTargetRect.height() / mBitmap.getHeight());
+                float right = mTargetRect.left + (rbox.right * mTargetRect.width() / mBitmap.getWidth());
+                float bottom = mTargetRect.top + (rbox.bottom * mTargetRect.height() / mBitmap.getHeight());
 
                 int alpha = (int)(255 * rbox.confidence);
                 int color = labelColor(rbox.classIdx, alpha);
 
                 mFramePaint.setColor(color);
                 mFramePaint.setStyle(Paint.Style.STROKE);
-                mFramePaint.setStrokeWidth(6);
+                mFramePaint.setStrokeWidth(8);
 
-                canvas.drawRect(p0[0], p0[1], p1[0], p1[1], mFramePaint);
+                canvas.drawRect(left, top, right, bottom, mFramePaint);
 
-                int white = Color.argb(alpha, 255, 255, 255);
+                int white = Color.argb(255, 255, 255, 255);
                 mTextPaint.setColor(white);
-                mTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-                mTextPaint.setStyle(Paint.Style.FILL);
-                mTextPaint.setTextSize(30);
+                mTextPaint.setTextSize(35);
 
-                float buf = 2.0f;
-                float textWidth = mTextPaint.measureText(rbox.label);
-                float textHeight = mTextPaint.getFontMetrics().bottom - mTextPaint.getFontMetrics().top - 8.0f;
-
+                float buf = 8.0f;
+                String mainLabel = rbox.label.toUpperCase();
+                float textWidth = mTextPaint.measureText(mainLabel);
+                
                 mLabelFramePaint.setColor(color);
                 mLabelFramePaint.setStyle(Paint.Style.FILL);
 
-                canvas.drawRect(left, upper, left+textWidth+2*buf, upper-textHeight-2*buf, mLabelFramePaint);
-                canvas.drawText(rbox.label, left+buf, upper+mTextPaint.getFontMetrics().top+buf+17.0f, mTextPaint);
+                // Draw label background
+                canvas.drawRect(left, top - 45f, left + textWidth + 2*buf, top, mLabelFramePaint);
+                // Draw label text
+                canvas.drawText(mainLabel, left + buf, top - 10f, mTextPaint);
+
+                // Draw restriction text if available
+                if (rbox.travelInfo != null) {
+                    mRestrictionPaint.setColor(Color.WHITE);
+                    mRestrictionPaint.setShadowLayer(4, 0, 0, Color.BLACK);
+                    
+                    String rest = rbox.travelInfo.message;
+                    
+                    // Choose color based on level
+                    int bgColor = 0xCC4CAF50; // Green
+                    if (rbox.travelInfo.level == RestrictionManager.Level.CAUTION) bgColor = 0xCCFF9800; // Orange
+                    else if (rbox.travelInfo.level == RestrictionManager.Level.DANGER) bgColor = 0xCCF44336; // Red
+
+                    // Intelligent Line Wrapping - Optimized to reduce allocations
+                    float maxWidth = Math.max(300, getWidth() * 0.45f);
+                    String[] words = rest.split(" ");
+                    StringBuilder lineBuilder = new StringBuilder();
+                    float currentY = bottom + 35f;
+                    float maxLineWidth = 0;
+                    int lineCount = 0;
+
+                    // First pass: calculate dimensions
+                    for (String word : words) {
+                        if (mRestrictionPaint.measureText(lineBuilder + word) < maxWidth) {
+                            lineBuilder.append(word).append(" ");
+                        } else {
+                            maxLineWidth = Math.max(maxLineWidth, mRestrictionPaint.measureText(lineBuilder.toString()));
+                            lineBuilder = new StringBuilder(word).append(" ");
+                            lineCount++;
+                        }
+                    }
+                    lineCount++;
+                    maxLineWidth = Math.max(maxLineWidth, mRestrictionPaint.measureText(lineBuilder.toString()));
+
+                    mLabelFramePaint.setColor(bgColor);
+                    canvas.drawRect(left, bottom, left + maxLineWidth + 16f, bottom + (lineCount * 38f) + 10f, mLabelFramePaint);
+                    
+                    // Second pass: draw
+                    lineBuilder = new StringBuilder();
+                    for (String word : words) {
+                        if (mRestrictionPaint.measureText(lineBuilder + word) < maxWidth) {
+                            lineBuilder.append(word).append(" ");
+                        } else {
+                            canvas.drawText(lineBuilder.toString(), left + 8f, currentY, mRestrictionPaint);
+                            lineBuilder = new StringBuilder(word).append(" ");
+                            currentY += 38f;
+                        }
+                    }
+                    canvas.drawText(lineBuilder.toString(), left + 8f, currentY, mRestrictionPaint);
+                }
             }
         }
         mLock.unlock();
