@@ -39,9 +39,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.efficientdet_lite.audio.AudioDebugViewModel
-import com.example.efficientdet_lite.ui.components.AudioVisualizer
 import java.util.concurrent.Executors
 
 @Composable
@@ -166,20 +163,7 @@ fun EfficientDetCameraScreen() {
             )
         }
 
-        // Audio Debug UI
-        if (hasAudioPermission) {
-            val audioViewModel: AudioDebugViewModel = viewModel()
-            Surface(
-                color = Color.White.copy(alpha = 0.8f),
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(16.dp)
-                    .width(200.dp)
-            ) {
-                AudioVisualizer(viewModel = audioViewModel)
-            }
-        }
+        // Audio Debug UI removed for independent testing
 
         Surface(
             color = Color.Black.copy(alpha = 0.55f),
