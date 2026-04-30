@@ -1,6 +1,7 @@
 package com.example.efficientdet_lite.navigation
 
 object Routes {
+    const val SPLASH = "splash"
     const val HOME = "home"
     const val CARRY_ON = "carry_on"
     const val ANNOUNCEMENTS = "announcements"
