@@ -2,7 +2,7 @@
 // Copyright (c) 2025 Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause
 // ---------------------------------------------------------------------
-package com.quicinc.objectdetection;
+package com.qualcomm.qti.objectdetection;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -16,7 +16,7 @@ import android.widget.ProgressBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.quicinc.tflite.AIHubDefaults;
+import com.qualcomm.tflite.AIHubDefaults;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
      * Method to navigate to CameraFragment
      */
     private void overToCamera() {
-        boolean passToFragment = MainActivity.this.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        boolean passToFragment = this.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         if (passToFragment) {
             if (detector != null) {
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();

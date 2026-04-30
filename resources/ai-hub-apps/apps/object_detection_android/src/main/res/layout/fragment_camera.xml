@@ -16,7 +16,7 @@
         android:layout_centerInParent="true"
         android:alpha="0" />
 
-    <com.quicinc.objectdetection.FragmentRender
+    <com.qualcomm.qti.objectdetection.FragmentRender
         android:id="@+id/fragmentRender"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

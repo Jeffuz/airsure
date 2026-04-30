@@ -7,7 +7,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.quicinc.objectdetection"
+        applicationId "com.qualcomm.qti.objectdetection"
         minSdk 31
         targetSdk 34
         versionCode 1
@@ -40,7 +40,7 @@ android {
 
     }
 
-    namespace 'com.quicinc.objectdetection'
+    namespace 'com.qualcomm.qti.objectdetection'
 }
 
 dependencies {

@@ -2,7 +2,7 @@
 // Copyright (c) 2025 Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause
 // ---------------------------------------------------------------------
-package com.quicinc.objectdetection;
+package com.qualcomm.qti.objectdetection;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

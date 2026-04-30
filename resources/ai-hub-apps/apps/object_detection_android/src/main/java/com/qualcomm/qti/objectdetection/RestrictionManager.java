@@ -1,4 +1,4 @@
-package com.quicinc.objectdetection;
+package com.qualcomm.qti.objectdetection;
 
 import java.util.HashMap;
 import java.util.Map;

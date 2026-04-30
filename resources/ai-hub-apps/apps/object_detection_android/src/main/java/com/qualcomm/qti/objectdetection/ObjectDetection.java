@@ -2,12 +2,12 @@
 // Copyright (c) 2025 Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause
 // ---------------------------------------------------------------------
-package com.quicinc.objectdetection;
+package com.qualcomm.qti.objectdetection;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Pair;
 
+import com.qualcomm.tflite.TFLiteHelpers;
 import com.google.ai.edge.litert.Accelerator;
 import com.google.ai.edge.litert.CompiledModel;
 import com.google.ai.edge.litert.TensorBuffer;
@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.nio.MappedByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -66,22 +65,8 @@ public class ObjectDetection implements AutoCloseable {
             labelList = labelsFile.lines().collect(Collectors.toCollection(ArrayList::new));
         }
 
-        CompiledModel localCompiledModel = null;
-        for (Accelerator accelerator : acceleratorPriorityOrder) {
-            try {
-                localCompiledModel = CompiledModel.create(context.getAssets(), modelPath, new CompiledModel.Options(accelerator));
-                android.util.Log.i("ObjectDetection", "Successfully created CompiledModel with " + accelerator.name());
-                break;
-            } catch (Exception e) {
-                android.util.Log.w("ObjectDetection", "Failed to create CompiledModel with " + accelerator.name() + ": " + e.getMessage());
-            }
-        }
+        liteRTModel = TFLiteHelpers.createModel(context, modelPath, acceleratorPriorityOrder);
 
-        if (localCompiledModel == null) {
-            throw new RuntimeException("Unable to create a CompiledModel for any accelerator.");
-        }
-
-        liteRTModel = localCompiledModel;
         try {
             inputBuffers = liteRTModel.createInputBuffers();
             outputBuffers = liteRTModel.createOutputBuffers();
