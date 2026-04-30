@@ -49,9 +49,12 @@ import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.Flight
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Luggage
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.rotate
@@ -713,40 +716,62 @@ private fun BottomNavMock(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(horizontal = 22.dp)
-            .padding(top = 8.dp, bottom = 10.dp)
+            .padding(horizontal = 26.dp)
+            .padding(top = 10.dp, bottom = 8.dp)
             .navigationBarsPadding(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BottomNavItem(label = "Home", icon = "⌂", active = true)
-        BottomNavItem(label = "Scan", icon = "⌗", active = false)
-        BottomNavItem(label = "Listen", icon = "♩", active = false)
-        BottomNavItem(label = "Settings", icon = "⚙", active = false)
+        BottomNavItem(
+            label = "Home",
+            icon = Icons.Outlined.Home,
+            active = true
+        )
+
+        BottomNavItem(
+            label = "Scan",
+            icon = Icons.Outlined.QrCodeScanner,
+            active = false
+        )
+
+        BottomNavItem(
+            label = "Listen",
+            icon = Icons.Outlined.Mic,
+            active = false
+        )
+
+        BottomNavItem(
+            label = "Settings",
+            icon = Icons.Outlined.Settings,
+            active = false
+        )
     }
 }
 
 @Composable
 private fun BottomNavItem(
     label: String,
-    icon: String,
+    icon: ImageVector,
     active: Boolean
 ) {
+    val itemColor = if (active) Blue else Color(0xFF7F88A2)
+
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = icon,
-            color = if (active) Blue else Color(0xFF7F88A2),
-            fontSize = 23.sp,
-            lineHeight = 24.sp
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = itemColor,
+            modifier = Modifier.size(24.dp)
         )
 
-        Spacer(modifier = Modifier.height(3.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
             text = label,
-            color = if (active) Blue else Color(0xFF7F88A2),
+            color = itemColor,
             fontSize = 12.sp,
             lineHeight = 16.sp,
             fontWeight = if (active) FontWeight.Medium else FontWeight.Normal
