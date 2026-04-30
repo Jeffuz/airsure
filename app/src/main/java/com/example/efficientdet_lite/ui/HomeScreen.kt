@@ -167,7 +167,10 @@ fun HomeScreen(
         }
 
         BottomNavMock(
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onHomeClick = { },
+            onScanClick = onScanCarryOnClick,
+            onListenClick = onAnnouncementsClick
         )
     }
 }
@@ -710,53 +713,93 @@ private fun AlertRow(
 
 @Composable
 private fun BottomNavMock(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onHomeClick: () -> Unit,
+    onScanClick: () -> Unit,
+    onListenClick: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(horizontal = 26.dp)
-            .padding(top = 10.dp, bottom = 8.dp)
-            .navigationBarsPadding(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .navigationBarsPadding()
     ) {
-        BottomNavItem(
-            label = "Home",
-            icon = Icons.Outlined.Home,
-            active = true
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 34.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavIndicator(active = true, modifier = Modifier.weight(1f))
+            BottomNavIndicator(active = false, modifier = Modifier.weight(1f))
+            BottomNavIndicator(active = false, modifier = Modifier.weight(1f))
+        }
 
-        BottomNavItem(
-            label = "Scan",
-            icon = Icons.Outlined.QrCodeScanner,
-            active = false
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 34.dp)
+                .padding(top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavItem(
+                modifier = Modifier.weight(1f),
+                label = "Home",
+                icon = Icons.Outlined.Home,
+                active = true,
+                onClick = onHomeClick
+            )
 
-        BottomNavItem(
-            label = "Listen",
-            icon = Icons.Outlined.Mic,
-            active = false
-        )
+            BottomNavItem(
+                modifier = Modifier.weight(1f),
+                label = "Scan",
+                icon = Icons.Outlined.QrCodeScanner,
+                active = false,
+                onClick = onScanClick
+            )
 
-        BottomNavItem(
-            label = "Settings",
-            icon = Icons.Outlined.Settings,
-            active = false
+            BottomNavItem(
+                modifier = Modifier.weight(1f),
+                label = "Listen",
+                icon = Icons.Outlined.Mic,
+                active = false,
+                onClick = onListenClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomNavIndicator(
+    active: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .width(46.dp)
+                .height(3.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .background(if (active) Blue else Color.Transparent)
         )
     }
 }
 
 @Composable
 private fun BottomNavItem(
+    modifier: Modifier = Modifier,
     label: String,
     icon: ImageVector,
-    active: Boolean
+    active: Boolean,
+    onClick: () -> Unit
 ) {
     val itemColor = if (active) Blue else Color(0xFF7F88A2)
 
     Column(
+        modifier = modifier.clickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
