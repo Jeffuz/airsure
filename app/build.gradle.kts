@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.material)
     implementation(libs.opencv)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.litert)
     implementation("androidx.compose.material3:material3:1.4.0")
     implementation("androidx.compose.material3:material3-window-size-class:1.4.0")

@@ -116,8 +116,8 @@ fun EfficientDetCameraScreen(
     var hasCameraPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        hasCameraPermission = granted
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        hasCameraPermission = isGranted
     }
 
     LaunchedEffect(Unit) {
@@ -193,6 +193,8 @@ fun EfficientDetCameraScreen(
                 modifier = Modifier.align(Alignment.Center),
             )
         }
+
+        // Audio Debug UI removed for independent testing
 
         Surface(
             color = Color.Black.copy(alpha = 0.55f),

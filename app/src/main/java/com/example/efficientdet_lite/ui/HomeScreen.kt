@@ -41,9 +41,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.R
+import com.example.efficientdet_lite.app.TripDetails
 
 // icons
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.Flight
@@ -70,9 +72,11 @@ private val Green = Color(0xFF14866D)
 
 @Composable
 fun HomeScreen(
+    tripDetails: TripDetails,
     onScanCarryOnClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
-    onRecentSubmissionsClick: () -> Unit
+    onRecentSubmissionsClick: () -> Unit,
+    onBoardingPassClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -123,7 +127,10 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            BoardingPassCard()
+            BoardingPassCard(
+                tripDetails = tripDetails,
+                onClick = onBoardingPassClick
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -241,9 +248,14 @@ private fun HomeHeader() {
 }
 
 @Composable
-private fun BoardingPassCard() {
+private fun BoardingPassCard(
+    tripDetails: TripDetails,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
         border = BorderStroke(1.dp, BorderBlue),
         colors = CardDefaults.cardColors(
@@ -334,62 +346,44 @@ private fun BoardingPassCard() {
             ) {
                 TravelInfoColumn(
                     label = "FROM",
-                    value = "-",
-                    subtitle = "-",
-                    modifier = Modifier.weight(1f)
+                    value = tripDetails.from.ifBlank { "—" },
+                    subtitle = if (tripDetails.from.isBlank()) "Not set" else "Origin",
+                    modifier = Modifier.weight(0.8f)
                 )
-
-                DividerLine()
-
-                Box(
-                    modifier = Modifier
-                        .width(52.dp)
-                        .fillMaxHeight(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Flight,
-                        contentDescription = null,
-                        tint = Color(0xFFB7C2D8),
-                        modifier = Modifier
-                            .size(18.dp)
-                            .rotate(90f)
-                    )
-                }
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "TO",
-                    value = "-",
-                    subtitle = "-",
-                    modifier = Modifier.weight(1f)
+                    value = tripDetails.to.ifBlank { "—" },
+                    subtitle = if (tripDetails.to.isBlank()) "Not set" else "Destination",
+                    modifier = Modifier.weight(0.8f)
                 )
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "DATE",
-                    value = "-",
-                    subtitle = "-",
-                    modifier = Modifier.weight(1.15f)
+                    value = tripDetails.date.ifBlank { "—" },
+                    subtitle = if (tripDetails.date.isBlank()) "Not set" else "Trip date",
+                    modifier = Modifier.weight(0.8f)
                 )
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "FLIGHT",
-                    value = "—",
-                    subtitle = "—",
-                    modifier = Modifier.weight(0.9f)
+                    value = tripDetails.flight.ifBlank { "—" },
+                    subtitle = if (tripDetails.flight.isBlank()) "Not set" else "Flight",
+                    modifier = Modifier.weight(0.8f)
                 )
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "GATE",
-                    value = "—",
-                    subtitle = "—",
+                    value = tripDetails.gate.ifBlank { "—" },
+                    subtitle = if (tripDetails.gate.isBlank()) "Pending" else "Gate",
                     modifier = Modifier.weight(0.8f)
                 )
             }
@@ -602,7 +596,7 @@ private fun RecentSubmissionsCard(onClick: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Text(
                 text = "View items you've previously scanned for carry-on compliance.",
                 color = Color(0xFF6D7898),

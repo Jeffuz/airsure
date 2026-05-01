@@ -1,22 +1,30 @@
 package com.example.efficientdet_lite.navigation
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.efficientdet_lite.announcements.AnnouncementScreen
+import com.example.efficientdet_lite.app.TripStorage
+import com.example.efficientdet_lite.carryon.CarryOnRepository
 import com.example.efficientdet_lite.carryon.CarryOnScannerScreen
 import com.example.efficientdet_lite.carryon.ItemDetailsScreen
-import com.example.efficientdet_lite.carryon.CarryOnRepository
+import com.example.efficientdet_lite.ui.BoardingPassFormScreen
 import com.example.efficientdet_lite.ui.HomeScreen
 import com.example.efficientdet_lite.ui.SplashScreen
-import com.qualcomm.qti.objectdetection.RestrictionManager
 
 @Composable
 fun AirSureNavHost() {
+    val context = LocalContext.current
     val navController = rememberNavController()
-    
-    // Observe saved items from repository
+
+    var tripDetails by remember { mutableStateOf(TripStorage.load(context)) }
     val savedItems by CarryOnRepository.savedItems.collectAsState()
 
     NavHost(
@@ -38,6 +46,7 @@ fun AirSureNavHost() {
 
         composable(Routes.HOME) {
             HomeScreen(
+                tripDetails = tripDetails,
                 onScanCarryOnClick = {
                     navController.navigate(Routes.CARRY_ON)
                 },
@@ -46,6 +55,9 @@ fun AirSureNavHost() {
                 },
                 onRecentSubmissionsClick = {
                     navController.navigate(Routes.ITEM_DETAILS)
+                },
+                onBoardingPassClick = {
+                    navController.navigate(Routes.BOARDING_PASS)
                 }
             )
         }
@@ -91,6 +103,20 @@ fun AirSureNavHost() {
         composable(Routes.ANNOUNCEMENTS) {
             AnnouncementScreen(
                 onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.BOARDING_PASS) {
+            BoardingPassFormScreen(
+                initialTripDetails = tripDetails,
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onSaveClick = { updatedTrip ->
+                    tripDetails = updatedTrip
+                    TripStorage.save(context, updatedTrip)
                     navController.popBackStack()
                 }
             )
