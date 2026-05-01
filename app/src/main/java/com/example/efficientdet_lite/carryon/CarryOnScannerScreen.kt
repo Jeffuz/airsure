@@ -11,7 +11,9 @@ import com.qualcomm.qti.objectdetection.RestrictionManager
 fun CarryOnScannerScreen(
     onBackClick: () -> Unit,
     onItemDetected: (List<Pair<String, RestrictionManager.TravelInfo?>>) -> Unit,
-    onSubmitClick: () -> Unit
+    onSubmitClick: () -> Unit,
+    onHomeClick: () -> Unit,
+    onListenClick: () -> Unit
 ) {
     var selectedCountry by remember { mutableStateOf("United States") }
 
@@ -19,7 +21,10 @@ fun CarryOnScannerScreen(
         EfficientDetCameraScreen(
             selectedCountry = selectedCountry,
             onItemDetected = onItemDetected,
-            onSubmit = onSubmitClick
+            onSubmit = onSubmitClick,
+            onHomeClick = onHomeClick,
+            onListenClick = onListenClick,
+            onBackClick = onHomeClick
         )
     }
 }
