@@ -78,6 +78,8 @@ class AudioViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
-        whisperModel.close()
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.Default) {
+            whisperModel.close()
+        }
     }
 }

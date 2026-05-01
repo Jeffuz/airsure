@@ -5,11 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.efficientdet_lite.app.AirSureApp
+import com.example.efficientdet_lite.app.TripRepository
 import com.example.efficientdet_lite.ui.theme.EfficientDETLiteTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        TripRepository.init(applicationContext)
         enableEdgeToEdge()
         setContent {
             EfficientDETLiteTheme {

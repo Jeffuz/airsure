@@ -32,64 +32,59 @@ class WhisperModel(private val context: Context) {
         private set
 
     suspend fun loadModels(onProgress: (String) -> Unit = {}) = withContext(Dispatchers.IO) {
-        if (isLoaded) {
-            withContext(Dispatchers.Main) { onProgress("AI Ready") }
-            return@withContext
-        }
-        
-        try {
-            withContext(Dispatchers.Main) { onProgress("1/3: Tokenizer...") }
-            tokenizer = WhisperTokenizer(context)
-            System.gc()
-            
-            val options = CompiledModel.Options(Accelerator.CPU)
-            
-            // DIAGNOSTIC: Load Decoder FIRST to see if it's a file-specific issue or a RAM issue
-            Log.d(TAG, "Step 2/3: Loading Decoder (290MB)...")
-            withContext(Dispatchers.Main) { onProgress("2/3: Decoder (290MB)...") }
-            
-            decoderModel = CompiledModel.create(context.assets, DECODER_ASSET, options)
-            Log.d(TAG, "Decoder loaded. Resting...")
-            
-            System.gc()
-            kotlinx.coroutines.delay(2000) // Longer rest for the OS
+        modelLock.withLock {
+            if (isLoaded) {
+                withContext(Dispatchers.Main) { onProgress("AI Ready") }
+                return@withLock
+            }
 
-            Log.d(TAG, "Step 3/3: Loading Encoder (370MB)...")
-            withContext(Dispatchers.Main) { onProgress("3/3: Encoder (370MB)...") }
-            
-            encoderModel = CompiledModel.create(context.assets, ENCODER_ASSET, options)
-            
-            isLoaded = true
-            withContext(Dispatchers.Main) { onProgress("AI Ready") }
-            Log.d(TAG, "Success! 660MB AI models loaded.")
-        } catch (e: Exception) {
-            Log.e(TAG, "Load failed", e)
-            withContext(Dispatchers.Main) { onProgress("Fail: ${e.message}") }
-            close()
-            throw e
-        } catch (e: OutOfMemoryError) {
-            Log.e(TAG, "CRITICAL OOM: Emulator needs more RAM (4GB+)")
-            withContext(Dispatchers.Main) { onProgress("Error: Out of Memory") }
-            close()
-            throw e
+            try {
+                withContext(Dispatchers.Main) { onProgress("1/3: Tokenizer...") }
+                tokenizer = WhisperTokenizer(context)
+                System.gc()
+
+                val options = CompiledModel.Options(Accelerator.CPU)
+
+                // DIAGNOSTIC: Load Decoder FIRST to see if it's a file-specific issue or a RAM issue
+                Log.d(TAG, "Step 2/3: Loading Decoder (290MB)...")
+                withContext(Dispatchers.Main) { onProgress("2/3: Decoder (290MB)...") }
+
+                decoderModel = CompiledModel.create(context.assets, DECODER_ASSET, options)
+                Log.d(TAG, "Decoder loaded. Resting...")
+
+                System.gc()
+                kotlinx.coroutines.delay(2000) // Longer rest for the OS
+
+                Log.d(TAG, "Step 3/3: Loading Encoder (370MB)...")
+                withContext(Dispatchers.Main) { onProgress("3/3: Encoder (370MB)...") }
+
+                encoderModel = CompiledModel.create(context.assets, ENCODER_ASSET, options)
+
+                isLoaded = true
+                withContext(Dispatchers.Main) { onProgress("AI Ready") }
+                Log.d(TAG, "Success! 660MB AI models loaded.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Load failed", e)
+                withContext(Dispatchers.Main) { onProgress("Fail: ${e.message}") }
+                // We don't call close() here because we are already holding the lock 
+                // and close() also tries to acquire it.
+                encoderModel?.close()
+                decoderModel?.close()
+                encoderModel = null
+                decoderModel = null
+                throw e
+            } catch (e: OutOfMemoryError) {
+                Log.e(TAG, "CRITICAL OOM: Emulator needs more RAM (4GB+)")
+                withContext(Dispatchers.Main) { onProgress("Error: Out of Memory") }
+                encoderModel?.close()
+                decoderModel?.close()
+                encoderModel = null
+                decoderModel = null
+                throw e
+            }
         }
     }
 
-    private fun logFloatStats(label: String, values: FloatArray) {
-        var min = Float.MAX_VALUE
-        var max = -Float.MAX_VALUE
-        var sum = 0f
-        var sumAbs = 0f
-
-        for (v in values) {
-            if (v < min) min = v
-            if (v > max) max = v
-            sum += v
-            sumAbs += kotlin.math.abs(v)
-        }
-
-        Log.d(TAG, "$label size=${values.size}, min=$min, max=$max, mean=${sum / values.size}, meanAbs=${sumAbs / values.size}")
-    }
 
     suspend fun transcribe(audioData: FloatArray): String = withContext(Dispatchers.Default) {
         modelLock.withLock {
@@ -109,13 +104,11 @@ class WhisperModel(private val context: Context) {
                 for (m in 0 until 80) {
                     mel[m].copyInto(melFlat, m * 3000, 0, 3000)
                 }
-                logFloatStats("melFlat", melFlat)
 
                 encoderInputs[0].writeFloat(melFlat)
                 encoder.run(encoderInputs, encoderOutputs)
 
                 val crossCaches = encoderOutputs.map { it.readFloat() }
-                Log.d(TAG, "Encoder finished. Cross-caches collected: ${crossCaches.size}")
 
                 val generatedTokens = mutableListOf<Int>()
                 var currentToken = tok.startOfTranscript
@@ -144,8 +137,8 @@ class WhisperModel(private val context: Context) {
                         if (cache != null) {
                             input.writeFloat(cache)
                         } else {
-                            // First step: write zeros. We assume size based on first run or model spec.
-                            // The buffers are usually zeroed by LiteRT on creation.
+                            // On first step, ensure buffers are clean
+                            input.writeFloat(FloatArray(input.readFloat().size))
                         }
                     }
 
@@ -156,10 +149,6 @@ class WhisperModel(private val context: Context) {
 
                     val logits = dOutputs[0].readFloat()
                     val nextToken = logits.indices.maxByOrNull { logits[it] } ?: tok.endOfText
-
-                    if (step % 10 == 0) {
-                        Log.d(TAG, "Step $step: token=$nextToken")
-                    }
 
                     if (nextToken == tok.endOfText) {
                         break
@@ -175,14 +164,15 @@ class WhisperModel(private val context: Context) {
 
                 return@withLock tok.decode(generatedTokens)
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.e(TAG, "Inference failed", e)
                 return@withLock "Error: ${e.message}"
             } finally {
-                encoderInputs.forEach { it.close() }
-                encoderOutputs.forEach { it.close() }
-                dInputs.forEach { it.close() }
-                dOutputs.forEach { it.close() }
-                System.gc()
+                // Just close the buffers we created in this session
+                runCatching { encoderInputs.forEach { it.close() } }
+                runCatching { encoderOutputs.forEach { it.close() } }
+                runCatching { dInputs.forEach { it.close() } }
+                runCatching { dOutputs.forEach { it.close() } }
             }
         }
     }
@@ -210,8 +200,13 @@ class WhisperModel(private val context: Context) {
     }
 
 
-    fun close() {
-        encoderModel?.close()
-        decoderModel?.close()
+    suspend fun close() = withContext(Dispatchers.Default) {
+        modelLock.withLock {
+            encoderModel?.close()
+            decoderModel?.close()
+            encoderModel = null
+            decoderModel = null
+            isLoaded = false
+        }
     }
 }

@@ -25,12 +25,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Flight
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -120,54 +117,6 @@ fun AudioVisualizer(
             AlertCard(
                 alert = alert,
                 onDismiss = { viewModel.clearAlert() }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        OutlinedButton(
-            onClick = { viewModel.runAssetTest("aa123_boarding.wav") },
-            shape = RoundedCornerShape(999.dp),
-            border = BorderStroke(1.dp, Color(0xFFCAD6EA)),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Blue
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Test AA123 Boarding",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-        OutlinedButton(
-            onClick = { viewModel.runAssetTest("aa123_delay.wav") },
-            shape = RoundedCornerShape(999.dp),
-            border = BorderStroke(1.dp, Color(0xFFCAD6EA)),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Blue
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Test AA123 Delay",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-        OutlinedButton(
-            onClick = { viewModel.runAssetTest("aa123_gate_change.wav") },
-            shape = RoundedCornerShape(999.dp),
-            border = BorderStroke(1.dp, Color(0xFFCAD6EA)),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Blue
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Test AA123 Gate Change",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
             )
         }
     }
