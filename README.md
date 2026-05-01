@@ -13,6 +13,8 @@ AirSure is designed to reduce the stress of air travel by providing intelligent,
 *   **Audio AI**: Employs a local **Distil-Whisper** model (sourced from Qualcomm AI Hub) to transcribe airport announcements and filter for specific flight alerts (gate changes, delays).
 *   **Edge Processing**: The majority of the application logic and all AI inference runs locally on the device for maximum privacy and low latency.
 
+<img width="888" height="497" alt="Image" src="https://github.com/user-attachments/assets/c46db3d1-3139-4195-b9e6-ae4bb8e732c3" />
+
 ## Key Features
 
 ### 1. Smart Carry-On Scanner (Vision AI)
