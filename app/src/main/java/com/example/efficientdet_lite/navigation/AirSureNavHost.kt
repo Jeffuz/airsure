@@ -110,6 +110,10 @@ fun AirSureNavHost() {
             AnnouncementScreen(
                 onBackClick = {
                     navController.popBackStack()
+                },
+                tripDetails = tripDetails,
+                onBoardingPassClick = {
+                    navController.navigate(Routes.BOARDING_PASS)
                 }
             )
         }

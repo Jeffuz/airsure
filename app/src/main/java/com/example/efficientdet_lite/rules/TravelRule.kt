@@ -1,6 +1,6 @@
 package com.example.efficientdet_lite.rules
 
-import com.example.efficientdet_lite.audio.AnnouncementCategory
+import com.example.efficientdet_lite.announcements.AnnouncementType
 
 sealed class TravelRule {
     abstract val name: String
@@ -16,7 +16,7 @@ sealed class TravelRule {
 
     data class AnnouncementRule(
         override val name: String,
-        val category: AnnouncementCategory,
+        val category: AnnouncementType,
         override val description: String,
         override val risk: TravelRisk
     ) : TravelRule()

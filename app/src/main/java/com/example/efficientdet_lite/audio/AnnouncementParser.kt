@@ -1,30 +1,17 @@
 package com.example.efficientdet_lite.audio
 
-import java.util.UUID
+import com.example.efficientdet_lite.announcements.Announcement
+import com.example.efficientdet_lite.announcements.AnnouncementType
+import com.example.efficientdet_lite.announcements.RiskLevel
 
 class AnnouncementParser {
-    
-    fun parse(text: String): Announcement {
-        val category = when {
-            text.contains("gate", ignoreCase = true) -> AnnouncementCategory.GATE_CHANGE
-            text.contains("boarding", ignoreCase = true) -> AnnouncementCategory.BOARDING
-            text.contains("security", ignoreCase = true) -> AnnouncementCategory.SECURITY
-            text.contains("emergency", ignoreCase = true) -> AnnouncementCategory.EMERGENCY
-            else -> AnnouncementCategory.GENERAL
-        }
-
-        val riskLevel = when (category) {
-            AnnouncementCategory.EMERGENCY -> RiskLevel.CRITICAL
-            AnnouncementCategory.SECURITY -> RiskLevel.HIGH
-            AnnouncementCategory.GATE_CHANGE -> RiskLevel.MEDIUM
-            else -> RiskLevel.LOW
-        }
-
+    fun parse(text: String): Announcement? {
+        // This is a bridge/legacy parser to satisfy AudioViewModel
         return Announcement(
-            id = UUID.randomUUID().toString(),
+            id = System.currentTimeMillis().toString(),
             text = text,
-            category = category,
-            riskLevel = riskLevel
+            category = AnnouncementType.UNKNOWN,
+            riskLevel = RiskLevel.LOW
         )
     }
 }
