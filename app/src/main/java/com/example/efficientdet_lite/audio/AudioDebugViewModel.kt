@@ -166,6 +166,17 @@ class AudioDebugViewModel(
         }
     }
 
+    fun startListeningIfReady() {
+        if (!isAILoaded || isRecording) return
+        start()
+    }
+
+    fun stopListening() {
+        if (isRecording) {
+            stop()
+        }
+    }
+
     private fun start() {
         // dont record before whsiper loads
         if (!isAILoaded) {
@@ -280,6 +291,7 @@ class AudioDebugViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        stopListening()
         whisperModel.close()
     }
 

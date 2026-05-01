@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.app.TripDetails
+import androidx.compose.material3.Scaffold
 
 
 @Composable
@@ -55,25 +56,37 @@ fun AnnouncementScreen(
                 )
             )
     ) {
-        if (tripDetails.flight.isBlank()) {
-            MissingFlightCodeState(
-                modifier = Modifier.align(Alignment.Center),
-                onBoardingPassClick = onBoardingPassClick
-            )
-        } else {
-            AudioDebugScreen(
-                tripDetails = tripDetails
-            )
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                AnnouncementTopBar(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 18.dp)
+                        .padding(top = 14.dp, bottom = 10.dp),
+                    onBackClick = onBackClick
+                )
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                if (tripDetails.flight.isBlank()) {
+                    MissingFlightCodeState(
+                        modifier = Modifier.align(Alignment.Center),
+                        onBoardingPassClick = onBoardingPassClick
+                    )
+                } else {
+                    AudioDebugScreen(
+                        tripDetails = tripDetails,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
-
-        AnnouncementTopBar(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .statusBarsPadding()
-                .padding(horizontal = 18.dp)
-                .padding(top = 14.dp),
-            onBackClick = onBackClick
-        )
     }
 }
 

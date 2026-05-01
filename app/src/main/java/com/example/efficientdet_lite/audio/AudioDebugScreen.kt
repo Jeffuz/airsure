@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.efficientdet_lite.announcements.FlightViewModel
 import com.example.efficientdet_lite.ui.components.AudioVisualizer
 
 import androidx.compose.foundation.Image
@@ -49,9 +48,10 @@ import com.example.efficientdet_lite.ui.theme.AirSureBlue
 import com.example.efficientdet_lite.ui.theme.AirSurePrimary
 import com.example.efficientdet_lite.ui.theme.AirSureProgressTrack
 import com.example.efficientdet_lite.ui.theme.AirSureSubtitle
+import androidx.compose.runtime.DisposableEffect
 
 @Composable
-fun AudioDebugScreen(tripDetails: TripDetails) {
+fun AudioDebugScreen(tripDetails: TripDetails,  modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val application = context.applicationContext as android.app.Application
     
@@ -81,6 +81,18 @@ fun AudioDebugScreen(tripDetails: TripDetails) {
                 audioViewModel.loadAI()
             }
 
+            LaunchedEffect(audioViewModel.isAILoaded) {
+                if (audioViewModel.isAILoaded) {
+                    audioViewModel.startListeningIfReady()
+                }
+            }
+
+            DisposableEffect(audioViewModel) {
+                onDispose {
+                    audioViewModel.stopListening()
+                }
+            }
+
             when {
                 audioViewModel.isLoadingAI || (!audioViewModel.isAILoaded && audioViewModel.loadError == null) -> {
                     WhisperLoadingScreen(
@@ -97,17 +109,10 @@ fun AudioDebugScreen(tripDetails: TripDetails) {
                 }
 
                 else -> {
-                    Surface(
-                        color = Color.White.copy(alpha = 0.9f),
-                        shape = MaterialTheme.shapes.medium,
-                        shadowElevation = 8.dp,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(16.dp)
-                            .width(300.dp)
-                    ) {
-                        AudioVisualizer(viewModel = audioViewModel)
-                    }
+                    AudioVisualizer(
+                        viewModel = audioViewModel,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
         }
