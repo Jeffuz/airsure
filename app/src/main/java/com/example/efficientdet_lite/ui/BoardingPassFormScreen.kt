@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.efficientdet_lite.app.TripDetails
 
 private val Navy = Color(0xFF0D1B5E)
 private val LogoNavy = Color(0xFF13235E)
@@ -52,13 +53,15 @@ private val BorderBlue = Color(0xFFCFE0FF)
 
 @Composable
 fun BoardingPassFormScreen(
-    onBackClick: () -> Unit
+    initialTripDetails: TripDetails,
+    onBackClick: () -> Unit,
+    onSaveClick: (TripDetails) -> Unit
 ) {
-    var from by remember { mutableStateOf("") }
-    var to by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var flight by remember { mutableStateOf("") }
-    var gate by remember { mutableStateOf("") }
+    var from by remember { mutableStateOf(initialTripDetails.from) }
+    var to by remember { mutableStateOf(initialTripDetails.to) }
+    var date by remember { mutableStateOf(initialTripDetails.date) }
+    var flight by remember { mutableStateOf(initialTripDetails.flight) }
+    var gate by remember { mutableStateOf(initialTripDetails.gate) }
 
     Box(
         modifier = Modifier
@@ -223,7 +226,15 @@ fun BoardingPassFormScreen(
             ) {
                 Button(
                     onClick = {
-                        onBackClick()
+                        onSaveClick(
+                            TripDetails(
+                                from = from.trim().uppercase(),
+                                to = to.trim().uppercase(),
+                                date = date.trim(),
+                                flight = flight.trim().uppercase(),
+                                gate = gate.trim().uppercase()
+                            )
+                        )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
