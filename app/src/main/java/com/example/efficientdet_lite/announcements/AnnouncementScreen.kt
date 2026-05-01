@@ -26,7 +26,8 @@ fun CarryOnScannerScreen(
 
 @Composable
 fun AnnouncementScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    flightViewModel: com.example.efficientdet_lite.announcements.FlightViewModel
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -34,6 +35,6 @@ fun AnnouncementScreen(
         Button(onClick = onBackClick) {
             Text("Back")
         }
-        AudioDebugScreen()
+        AudioDebugScreen(flightViewModel = flightViewModel)
     }
 }

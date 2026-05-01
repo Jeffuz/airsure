@@ -14,5 +14,10 @@
 .cxx
 local.properties
 
+.venv/
+venv/
+__pycache__/
+*.pyc
+
 build/
 **/build/

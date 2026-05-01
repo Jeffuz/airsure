@@ -1,7 +1,7 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -48,23 +48,26 @@ android {
             useLegacyPackaging = true
         }
     }
-    bundle {
-        deviceTargetingConfig = file("device_targeting_configuration.xml")
-        deviceGroup {
-            enableSplit = true
-            defaultGroup = "other"
-        }
-    }
-//    dynamicFeatures.addAll(
-//        setOf(
-//            ":litert_npu_runtime_libraries:qualcomm_runtime_v69",
-//            ":litert_npu_runtime_libraries:qualcomm_runtime_v73",
-//            ":litert_npu_runtime_libraries:qualcomm_runtime_v75",
-//            ":litert_npu_runtime_libraries:qualcomm_runtime_v79",
-//            ":litert_npu_runtime_libraries:qualcomm_runtime_v81",
-//        ),
-//    )
+//    bundle {
+//        deviceTargetingConfig = file("device_targeting_configuration.xml")
+//        deviceGroup {
+//            enableSplit = true
+//            defaultGroup = "other"
+//        }
+//    }
+    dynamicFeatures.addAll(
+        setOf(
+            ":litert_npu_runtime_libraries:qualcomm_runtime_v69",
+            ":litert_npu_runtime_libraries:qualcomm_runtime_v73",
+            ":litert_npu_runtime_libraries:qualcomm_runtime_v75",
+            ":litert_npu_runtime_libraries:qualcomm_runtime_v79",
+            ":litert_npu_runtime_libraries:qualcomm_runtime_v81",
+        ),
+    )
 }
+
+
+tasks.register("prepareKotlinBuildScriptModel") {}
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))

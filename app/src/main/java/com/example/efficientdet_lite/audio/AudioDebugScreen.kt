@@ -24,11 +24,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.efficientdet_lite.announcements.FlightViewModel
 import com.example.efficientdet_lite.ui.components.AudioVisualizer
 
 @Composable
-fun AudioDebugScreen() {
+fun AudioDebugScreen(flightViewModel: FlightViewModel) {
     val context = LocalContext.current
+    val application = context.applicationContext as android.app.Application
+    
     var hasAudioPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
     }
@@ -47,7 +50,9 @@ fun AudioDebugScreen() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (hasAudioPermission) {
-            val audioViewModel: AudioDebugViewModel = viewModel()
+            val audioViewModel: AudioDebugViewModel = viewModel(
+                factory = AudioDebugViewModel.Factory(application, flightViewModel)
+            )
             Surface(
                 color = Color.White.copy(alpha = 0.9f),
                 shape = MaterialTheme.shapes.medium,
