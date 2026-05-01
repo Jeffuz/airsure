@@ -126,12 +126,6 @@ fun AudioVisualizer(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        LatestAnnouncementCard(
-            transcription = viewModel.transcription
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
         OutlinedButton(
             onClick = { viewModel.runAssetTest("aa123_boarding.wav") },
             shape = RoundedCornerShape(999.dp),
@@ -143,6 +137,36 @@ fun AudioVisualizer(
         ) {
             Text(
                 text = "Test AA123 Boarding",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        OutlinedButton(
+            onClick = { viewModel.runAssetTest("aa123_delay.wav") },
+            shape = RoundedCornerShape(999.dp),
+            border = BorderStroke(1.dp, Color(0xFFCAD6EA)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Blue
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Test AA123 Delay",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        OutlinedButton(
+            onClick = { viewModel.runAssetTest("aa123_gate_change.wav") },
+            shape = RoundedCornerShape(999.dp),
+            border = BorderStroke(1.dp, Color(0xFFCAD6EA)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Blue
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Test AA123 Gate Change",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -175,14 +199,14 @@ private fun StatusCard(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isRecording) Color(0xFFEAF7F4) else LightBlue
+                            LightBlue
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Mic,
                         contentDescription = null,
-                        tint = if (isRecording) Green else Blue,
+                        tint = Blue,
                         modifier = Modifier.size(25.dp)
                     )
                 }
@@ -212,34 +236,6 @@ private fun StatusCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Color(0xFFE5EAF3))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(
-                            if (isRecording) amplitude.coerceIn(0.08f, 1f) else 0.08f
-                        )
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(
-                                    if (isRecording) Green else Blue,
-                                    Blue
-                                )
-                            )
-                        )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
         }
     }
 }
@@ -336,23 +332,6 @@ private fun AlertCard(
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            OutlinedButton(
-                onClick = onDismiss,
-                shape = RoundedCornerShape(999.dp),
-                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.45f)),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = accentColor
-                ),
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text(
-                    text = "Dismiss",
-                    fontWeight = FontWeight.Medium
-                )
-            }
         }
     }
 }
@@ -385,80 +364,5 @@ private fun InfoPill(
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold
         )
-    }
-}
-
-@Composable
-private fun LatestAnnouncementCard(
-    transcription: String
-) {
-    val placeholderTexts = setOf(
-        "Ready to listen.",
-        "Listening...",
-        "Listening again...",
-        "Stopped.",
-        "Loading Whisper AI..."
-    )
-
-    val displayText = if (
-        transcription.isBlank() ||
-        placeholderTexts.contains(transcription)
-    ) {
-        "No announcement captured yet."
-    } else {
-        transcription
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
-        border = BorderStroke(1.dp, Color(0xFFE0E7F5)),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.NotificationsNone,
-                    contentDescription = null,
-                    tint = Blue,
-                    modifier = Modifier.size(22.dp)
-                )
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Text(
-                    text = "Latest announcement",
-                    color = Navy,
-                    fontSize = 18.sp,
-                    lineHeight = 23.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 88.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFFF6F8FC))
-                    .padding(16.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = displayText,
-                    color = if (displayText == "No announcement captured yet.") MutedGray else Color(0xFF34405F),
-                    fontSize = 15.sp,
-                    lineHeight = 21.sp,
-                    textAlign = TextAlign.Start
-                )
-            }
-        }
     }
 }
