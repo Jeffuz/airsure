@@ -44,7 +44,7 @@ class AudioDebugViewModel(
     var isRecording by mutableStateOf(false)
         private set
 
-    var transcription by mutableStateOf("AI not loaded. Tap below.")
+    var transcription by mutableStateOf("Loading Whisper AI...")
         private set
 
     var isAILoaded by mutableStateOf(false)

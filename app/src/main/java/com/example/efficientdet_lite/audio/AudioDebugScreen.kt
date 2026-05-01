@@ -53,6 +53,11 @@ fun AudioDebugScreen(flightViewModel: FlightViewModel) {
             val audioViewModel: AudioDebugViewModel = viewModel(
                 factory = AudioDebugViewModel.Factory(application, flightViewModel)
             )
+            LaunchedEffect(audioViewModel) {
+                audioViewModel.loadAI()
+                audioViewModel.toggleRecording()
+            }
+
             Surface(
                 color = Color.White.copy(alpha = 0.9f),
                 shape = MaterialTheme.shapes.medium,
