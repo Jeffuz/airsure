@@ -1,8 +1,0 @@
-pytest
-pytest-mock
-qai_hub_models==0.42.0
-typed-argument-parser
-boto3 # for fetching test assets
-botocore # for fetching test assets
-types-boto3[s3,sts] # type stubs for boto3/botocore
-tqdm>=4.66 # for fetching test assets
