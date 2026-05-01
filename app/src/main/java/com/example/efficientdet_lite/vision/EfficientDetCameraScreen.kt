@@ -326,14 +326,14 @@ private fun ScannerTopBar(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(999.dp))
-                .background(Color.White.copy(alpha = 0.95f))
+                .background(Color.White.copy(alpha = 0.97f))
                 .border(
                     width = 1.dp,
                     color = Color(0xFFE0E7F5),
                     shape = RoundedCornerShape(999.dp)
                 )
                 .clickable { onBackClick() }
-                .padding(horizontal = 15.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -394,8 +394,9 @@ private fun ScannerTopBar(
             Text(
                 text = "Analyzing locally",
                 color = Color(0xFF006BFF),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
             )
         }
     }
