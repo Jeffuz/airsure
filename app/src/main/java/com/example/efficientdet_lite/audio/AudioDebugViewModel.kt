@@ -11,8 +11,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.efficientdet_lite.announcements.Announcement
 import com.example.efficientdet_lite.announcements.AnnouncementProcessor
+import com.example.efficientdet_lite.announcements.AnnouncementRepository
+import com.example.efficientdet_lite.announcements.AnnouncementType
 import com.example.efficientdet_lite.announcements.FlightAnnouncement
 import com.example.efficientdet_lite.app.TripDetails
+import com.example.efficientdet_lite.app.TripRepository
+import com.example.efficientdet_lite.app.TripStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -20,8 +24,7 @@ import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 class AudioDebugViewModel(
-    application: Application,
-    private val tripDetails: TripDetails
+    application: Application
 ) : AndroidViewModel(application) {
 
     private val audioRecorder = AudioRecorder()
@@ -34,6 +37,8 @@ class AudioDebugViewModel(
         private const val SILENCE_DURATION_MS = 1500L
         private const val MAX_RECORDING_MS = 15000L
     }
+
+    private var currentTrip = TripDetails()
 
     var amplitude by mutableStateOf(0f)
         private set
@@ -62,8 +67,13 @@ class AudioDebugViewModel(
     var activeAlert by mutableStateOf<FlightAnnouncement?>(null)
         private set
 
-    private val currentTrip: TripDetails
-        get() = tripDetails
+    init {
+        viewModelScope.launch {
+            TripRepository.tripDetails.collect {
+                currentTrip = it
+            }
+        }
+    }
 
     private val audioBuffer = mutableListOf<Float>()
     private var lastSpeechTime = 0L
@@ -154,6 +164,12 @@ class AudioDebugViewModel(
                     "MATCH FOUND: ${announcement.type} for ${announcement.matchedFlightNumber}"
                 )
                 activeAlert = announcement
+                AnnouncementRepository.setAlert(announcement)
+
+                // Permanently update the trip repository if a new gate is detected
+                if (announcement.type == AnnouncementType.GATE_CHANGE && announcement.gate != null) {
+                    TripRepository.updateGate(getApplication(), announcement.gate)
+                }
             }
         }
     }
@@ -228,9 +244,6 @@ class AudioDebugViewModel(
                         withContext(Dispatchers.Main) { transcription = "Transcribing..." }
                         val result = whisperModel.transcribe(audioData)
                         handleTranscript(result)
-                        withContext(Dispatchers.Main) {
-                            if (isRecording) transcription = "Listening again..."
-                        }
                     }
 
                     withContext(Dispatchers.Main) {
@@ -287,23 +300,30 @@ class AudioDebugViewModel(
 
     fun clearAlert() {
         activeAlert = null
+        AnnouncementRepository.clear()
     }
 
     override fun onCleared() {
         super.onCleared()
         stopListening()
-        whisperModel.close()
+        // We use a separate scope or runBlocking because the viewModelScope is likely cancelled here
+        // However, standard practice is to use GlobalScope for cleanup if necessary, but withLock will handle it.
+        // Actually, better to just launch on a non-cancelled scope if we really need it to finish closing.
+        // For now, let's just use the application scope or just launch and hope for the best.
+        // Actually, models are large, so we definitely want them closed.
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.Default) {
+            whisperModel.close()
+        }
     }
 
     /**
      * Factory to inject FlightViewModel
      */
     class Factory(
-        private val application: Application,
-        private val tripDetails: TripDetails
+        private val application: Application
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return AudioDebugViewModel(application, tripDetails) as T
+            return AudioDebugViewModel(application) as T
         }
     }
 }

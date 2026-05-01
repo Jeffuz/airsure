@@ -1,119 +1,77 @@
 package com.example.efficientdet_lite.audio
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.efficientdet_lite.ui.components.AudioVisualizer
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.R
-import com.example.efficientdet_lite.app.TripDetails
+import com.example.efficientdet_lite.ui.components.AudioVisualizer
 import com.example.efficientdet_lite.ui.theme.AirSureBg
 import com.example.efficientdet_lite.ui.theme.AirSureBlue
 import com.example.efficientdet_lite.ui.theme.AirSurePrimary
 import com.example.efficientdet_lite.ui.theme.AirSureProgressTrack
 import com.example.efficientdet_lite.ui.theme.AirSureSubtitle
-import androidx.compose.runtime.DisposableEffect
 
 @Composable
-fun AudioDebugScreen(tripDetails: TripDetails,  modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val application = context.applicationContext as android.app.Application
-    
-    var hasAudioPermission by remember {
-        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasAudioPermission = isGranted
-    }
-
-    LaunchedEffect(Unit) {
-        if (!hasAudioPermission) {
-            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+fun AudioDebugScreen(viewModel: AudioDebugViewModel, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxSize()) {
+        LaunchedEffect(viewModel) {
+            viewModel.loadAI()
         }
-    }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (hasAudioPermission) {
-            val audioViewModel: AudioDebugViewModel = viewModel(
-                factory = AudioDebugViewModel.Factory(application, tripDetails)
-            )
+        LaunchedEffect(viewModel.isAILoaded) {
+            if (viewModel.isAILoaded) {
+                viewModel.startListeningIfReady()
+            }
+        }
 
-            LaunchedEffect(audioViewModel) {
-                audioViewModel.loadAI()
+        DisposableEffect(viewModel) {
+            onDispose {
+                viewModel.stopListening()
+            }
+        }
+
+        when {
+            viewModel.isLoadingAI || (!viewModel.isAILoaded && viewModel.loadError == null) -> {
+                WhisperLoadingScreen(
+                    statusText = viewModel.loadingMessage,
+                    progress = viewModel.loadingProgress
+                )
             }
 
-            LaunchedEffect(audioViewModel.isAILoaded) {
-                if (audioViewModel.isAILoaded) {
-                    audioViewModel.startListeningIfReady()
-                }
+            viewModel.loadError != null -> {
+                Text(
+                    text = "Failed to load Whisper AI: ${viewModel.loadError}",
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
 
-            DisposableEffect(audioViewModel) {
-                onDispose {
-                    audioViewModel.stopListening()
-                }
-            }
-
-            when {
-                audioViewModel.isLoadingAI || (!audioViewModel.isAILoaded && audioViewModel.loadError == null) -> {
-                    WhisperLoadingScreen(
-                        statusText = audioViewModel.loadingMessage,
-                        progress = audioViewModel.loadingProgress
-                    )
-                }
-
-                audioViewModel.loadError != null -> {
-                    Text(
-                        text = "Failed to load Whisper AI: ${audioViewModel.loadError}",
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                else -> {
-                    AudioVisualizer(
-                        viewModel = audioViewModel,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+            else -> {
+                AudioVisualizer(
+                    viewModel = viewModel,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
@@ -220,7 +178,6 @@ private fun WhisperLoadingScreen(
 
             Spacer(
                 modifier = Modifier
-                    .navigationBarsPadding()
                     .height(28.dp)
             )
         }

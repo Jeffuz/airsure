@@ -36,6 +36,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
+import com.example.efficientdet_lite.ui.BottomNavBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,141 +96,153 @@ fun ItemDetailsScreen(
                 )
             )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 22.dp)
-                .padding(top = 18.dp, bottom = 28.dp)
-        ) {
-            ResultHeader(
-                onBackClick = onBackClick
-            )
+        Scaffold(
+            containerColor = Color.Transparent,
+            bottomBar = {
+                BottomNavBar(
+                    activeRoute = "scan",
+                    onHomeClick = onHomeClick,
+                    onScanClick = onAddAnotherClick,
+                    onListenClick = onListenClick
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .statusBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 22.dp)
+                    .padding(top = 18.dp, bottom = 28.dp)
+            ) {
+                ResultHeader(
+                    onBackClick = onBackClick
+                )
 
-            Spacer(modifier = Modifier.height(36.dp))
+                Spacer(modifier = Modifier.height(36.dp))
 
-            Text(
-                text = "Carry-On Scan Complete",
-                color = Navy,
-                fontSize = 30.sp,
-                lineHeight = 36.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.8).sp
-            )
+                Text(
+                    text = "Carry-On Scan Complete",
+                    color = Navy,
+                    fontSize = 30.sp,
+                    lineHeight = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.8).sp
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = if (attentionCount == 1) {
-                    "1 item needs attention before security."
+                Text(
+                    text = if (attentionCount == 1) {
+                        "1 item needs attention before security."
+                    } else {
+                        "$attentionCount items need attention before security."
+                    },
+                    color = BodyGray,
+                    fontSize = 18.sp,
+                    lineHeight = 25.sp,
+                    fontWeight = FontWeight.Normal
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                if (items.isEmpty()) {
+                    EmptyScanCard()
                 } else {
-                    "$attentionCount items need attention before security."
-                },
-                color = BodyGray,
-                fontSize = 18.sp,
-                lineHeight = 25.sp,
-                fontWeight = FontWeight.Normal
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            if (items.isEmpty()) {
-                EmptyScanCard()
-            } else {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items.forEach { (label, info) ->
-                        ScanResultCard(
-                            label = label,
-                            info = info
-                        )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items.forEach { (label, info) ->
+                            ScanResultCard(
+                                label = label,
+                                info = info
+                            )
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
-            Button(
-                onClick = onAddAnotherClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Blue,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(999.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.RestartAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp)
-                )
+                Button(
+                    onClick = onAddAnotherClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(58.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Blue,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.RestartAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp)
+                    )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
-                Text(
-                    text = "Scan again",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                    Text(
+                        text = "Scan again",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-            Button(
-                onClick = onHomeClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Blue
-                ),
-                border = BorderStroke(1.dp, Color(0xFFE0E7F5)),
-                shape = RoundedCornerShape(999.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Home,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp)
-                )
+                Button(
+                    onClick = onHomeClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(58.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Blue
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFFE0E7F5)),
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Home,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp)
+                    )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
-                Text(
-                    text = "Back home",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                    Text(
+                        text = "Back home",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Security,
-                    contentDescription = null,
-                    tint = Color(0xFF8C94AA),
-                    modifier = Modifier.size(18.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Security,
+                        contentDescription = null,
+                        tint = Color(0xFF8C94AA),
+                        modifier = Modifier.size(18.dp)
+                    )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                Text(
-                    text = "Runs locally · No Wi-Fi required",
-                    color = Color(0xFF8C94AA),
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                    Text(
+                        text = "Runs locally · No Wi-Fi required",
+                        color = Color(0xFF8C94AA),
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

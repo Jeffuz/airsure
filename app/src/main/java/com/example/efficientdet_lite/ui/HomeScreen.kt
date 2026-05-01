@@ -27,6 +27,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +43,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.R
 import com.example.efficientdet_lite.app.TripDetails
+import com.example.efficientdet_lite.announcements.AnnouncementType
+import com.example.efficientdet_lite.announcements.FlightAnnouncement
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
 
 // icons
 import androidx.compose.material.icons.Icons
@@ -73,6 +82,7 @@ private val Green = Color(0xFF14866D)
 @Composable
 fun HomeScreen(
     tripDetails: TripDetails,
+    activeAlert: FlightAnnouncement? = null,
     onScanCarryOnClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
     onRecentSubmissionsClick: () -> Unit,
@@ -129,6 +139,7 @@ fun HomeScreen(
 
             BoardingPassCard(
                 tripDetails = tripDetails,
+                activeAlert = activeAlert,
                 onClick = onBoardingPassClick
             )
 
@@ -250,16 +261,63 @@ private fun HomeHeader() {
 @Composable
 private fun BoardingPassCard(
     tripDetails: TripDetails,
+    activeAlert: FlightAnnouncement? = null,
     onClick: () -> Unit
 ) {
+    val displayGate = if (activeAlert?.type == AnnouncementType.GATE_CHANGE && activeAlert.gate != null) {
+        activeAlert.gate
+    } else {
+        tripDetails.gate
+    }
+
+    val gateSubtitle = when (activeAlert?.type) {
+        AnnouncementType.GATE_CHANGE -> "Gate Change!"
+        AnnouncementType.BOARDING -> "Now Boarding"
+        AnnouncementType.FINAL_CALL -> "Final Call"
+        else -> if (displayGate.isBlank()) "Pending" else "Gate"
+    }
+
+    val gateColor by animateColorAsState(
+        targetValue = when (activeAlert?.type) {
+            AnnouncementType.BOARDING, AnnouncementType.FINAL_CALL -> Green
+            AnnouncementType.GATE_CHANGE -> Blue
+            else -> Color(0xFF16245F)
+        },
+        animationSpec = tween(1000)
+    )
+
+    val dateSubtitle = when (activeAlert?.type) {
+        AnnouncementType.DELAY -> "Delayed"
+        else -> if (tripDetails.date.isBlank()) "Not set" else "Trip date"
+    }
+
+    val dateColor by animateColorAsState(
+        targetValue = if (activeAlert?.type == AnnouncementType.DELAY) Color.Red else Color(0xFF16245F),
+        animationSpec = tween(1000)
+    )
+
+    val headerText = if (activeAlert != null) "Flight Alert!" else "Boarding Pass"
+    val headerSubtext = when (activeAlert?.type) {
+        AnnouncementType.GATE_CHANGE -> "New gate detected for ${activeAlert.matchedFlightNumber}"
+        AnnouncementType.BOARDING -> "Boarding has started!"
+        AnnouncementType.DELAY -> "Delay announced."
+        AnnouncementType.FINAL_CALL -> "Final boarding call!"
+        else -> if (tripDetails.hasAnyValue()) "Live flight monitoring active." else "Add your trip to get personalized alerts."
+    }
+
+    val headerIconColor by animateColorAsState(
+        targetValue = if (activeAlert != null) Blue else Blue, // Could change if desired
+        animationSpec = tween(1000)
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
-        border = BorderStroke(1.dp, BorderBlue),
+        border = BorderStroke(if (activeAlert != null) 2.dp else 1.dp, if (activeAlert != null) Blue else BorderBlue),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF4FAFF)
+            containerColor = if (activeAlert != null) Color(0xFFF0F7FF) else Color(0xFFF4FAFF)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -274,13 +332,13 @@ private fun BoardingPassCard(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .border(2.dp, Blue, RoundedCornerShape(12.dp)),
+                        .border(2.dp, headerIconColor, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.ConfirmationNumber,
+                        imageVector = if (activeAlert != null) Icons.Outlined.NotificationsNone else Icons.Outlined.ConfirmationNumber,
                         contentDescription = null,
-                        tint = Blue,
+                        tint = headerIconColor,
                         modifier = Modifier.size(26.dp)
                     )
                 }
@@ -291,7 +349,7 @@ private fun BoardingPassCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "Boarding Pass",
+                        text = headerText,
                         color = Color(0xFF16245F),
                         fontSize = 18.sp,
                         lineHeight = 24.sp,
@@ -302,7 +360,7 @@ private fun BoardingPassCard(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = "Add your trip to get personalized alerts.",
+                        text = headerSubtext,
                         color = Color(0xFF6F7A99),
                         fontSize = 14.sp,
                         lineHeight = 20.sp,
@@ -365,7 +423,8 @@ private fun BoardingPassCard(
                 TravelInfoColumn(
                     label = "DATE",
                     value = tripDetails.date.ifBlank { "—" },
-                    subtitle = if (tripDetails.date.isBlank()) "Not set" else "Trip date",
+                    subtitle = dateSubtitle,
+                    valueColor = dateColor,
                     modifier = Modifier.weight(0.8f)
                 )
 
@@ -382,8 +441,9 @@ private fun BoardingPassCard(
 
                 TravelInfoColumn(
                     label = "GATE",
-                    value = tripDetails.gate.ifBlank { "—" },
-                    subtitle = if (tripDetails.gate.isBlank()) "Pending" else "Gate",
+                    value = displayGate.ifBlank { "—" },
+                    subtitle = gateSubtitle,
+                    valueColor = gateColor,
                     modifier = Modifier.weight(0.8f)
                 )
             }
@@ -422,13 +482,13 @@ private fun TravelInfoColumn(
     label: String,
     value: String,
     subtitle: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueColor: Color = Color(0xFF16245F)
 ) {
     Column(
         modifier = modifier.padding(horizontal = 6.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        val MutedGray = Color(0xFF7D87A2)
         val LabelGray = Color(0xFF8D96AE)
         Text(
             text = label,
@@ -443,7 +503,7 @@ private fun TravelInfoColumn(
 
         Text(
             text = value,
-            color = Color(0xFF16245F),
+            color = valueColor,
             fontSize = 16.sp,
             lineHeight = 20.sp,
             fontWeight = FontWeight.Bold,
