@@ -42,6 +42,7 @@ coverage.xml
 .pytest_cache/
 
 # --- Large Assets (handled by Git LFS) ---
+*.hprof
 # We don't ignore .tflite, but we ensure they are tracked by LFS instead of raw Git
 # If you want to be extra safe, you can ignore all large binaries:
 *.so
