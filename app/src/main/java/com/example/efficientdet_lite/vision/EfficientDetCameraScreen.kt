@@ -186,15 +186,9 @@ fun EfficientDetCameraScreen(selectedCountry: String = "United States") {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Destination: $selectedCountry",
-                    color = Color.Yellow,
+                    color = Color(0xFFADD8E6),
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                )
-                Text(
-                    text = "Backend: ${result.backend}",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 )
             }
         }

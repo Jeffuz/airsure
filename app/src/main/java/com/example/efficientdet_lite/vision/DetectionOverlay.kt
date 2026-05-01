@@ -27,17 +27,15 @@ fun DetectionOverlay(
         val dy = (size.height - result.frameHeight * scale) / 2f
 
         val boxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.rgb(82, 222, 151)
             style = Paint.Style.STROKE
-            strokeWidth = 4f
+            strokeWidth = 6f
         }
         val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.WHITE
-            textSize = 34f
-            typeface = Typeface.DEFAULT_BOLD
+            textSize = 36f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
         val labelBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.argb(220, 24, 30, 36)
             style = Paint.Style.FILL
         }
         val restrictionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -66,68 +64,80 @@ fun DetectionOverlay(
                     sourceBox.bottom * scale + dy,
                 )
                 
-                // Use level-based colors for box
-                val boxColor = when (detection.travelInfo?.level) {
-                    RestrictionManager.Level.DANGER -> android.graphics.Color.RED
-                    RestrictionManager.Level.CAUTION -> android.graphics.Color.rgb(255, 152, 0)
-                    else -> android.graphics.Color.rgb(82, 222, 151)
+                // 1. Determine Colors and Status Text
+                val info = detection.travelInfo
+                val (primaryColor, statusHeader) = when (info?.level) {
+                    RestrictionManager.Level.DANGER -> android.graphics.Color.RED to "NOT ALLOWED"
+                    RestrictionManager.Level.CAUTION -> android.graphics.Color.rgb(255, 159, 10) to "CAREFUL"
+                    RestrictionManager.Level.INFO -> android.graphics.Color.rgb(48, 209, 88) to "ALLOWED"
+                    else -> android.graphics.Color.rgb(100, 210, 255) to "SCANNING"
                 }
-                boxPaint.color = boxColor
+
+                // 2. Draw the Main Bounding Box
+                boxPaint.color = primaryColor
                 nativeCanvas.drawRect(box, boxPaint)
 
-                val label = "${detection.label.uppercase()} ${(detection.confidence * 100).toInt()}%"
-                val textWidth = labelPaint.measureText(label)
-                val textHeight = labelPaint.textSize
+                // 3. Draw the Top Label (Item Name + Status Header)
+                val topLabel = "${detection.label.uppercase()} - $statusHeader"
+                val topLabelWidth = labelPaint.measureText(topLabel)
+                val topLabelHeight = labelPaint.textSize
                 
-                labelBackgroundPaint.color = boxColor
-                val labelRect = RectF(
+                labelBackgroundPaint.color = primaryColor
+                val topLabelRect = RectF(
                     box.left,
-                    max(0f, box.top - textHeight - 12f),
-                    box.left + textWidth + 18f,
-                    max(textHeight + 12f, box.top),
+                    max(0f, box.top - topLabelHeight - 16f),
+                    box.left + topLabelWidth + 24f,
+                    box.top
                 )
-                nativeCanvas.drawRoundRect(labelRect, 6f, 6f, labelBackgroundPaint)
-                nativeCanvas.drawText(label, labelRect.left + 9f, labelRect.bottom - 10f, labelPaint)
+                nativeCanvas.drawRect(topLabelRect, labelBackgroundPaint)
+                nativeCanvas.drawText(topLabel, topLabelRect.left + 12f, topLabelRect.bottom - 12f, labelPaint)
                 
-                // Draw travel info
+                // 4. Draw the Bottom Info Card (Detailed Message)
                 detection.travelInfo?.let { info ->
-                    val bgColor = when (info.level) {
-                        RestrictionManager.Level.DANGER -> android.graphics.Color.argb(200, 244, 67, 54)
-                        RestrictionManager.Level.CAUTION -> android.graphics.Color.argb(200, 255, 152, 0)
-                        else -> android.graphics.Color.argb(200, 76, 175, 80)
-                    }
-                    labelBackgroundPaint.color = bgColor
+                    val infoBgColor = android.graphics.Color.argb(230, 28, 28, 30) // Dark semi-transparent background
+                    labelBackgroundPaint.color = infoBgColor
                     
                     val words = info.message.split(" ")
-                    val maxWidth = max(300f, size.width * 0.45f)
+                    val maxWidth = max(350f, box.width() + 40f)
                     val lines = mutableListOf<String>()
                     var currentLine = StringBuilder()
                     
                     for (word in words) {
-                        if (restrictionPaint.measureText(currentLine.toString() + word) < maxWidth) {
+                        if (restrictionPaint.measureText(currentLine.toString() + word) < maxWidth - 30f) {
                             currentLine.append(word).append(" ")
                         } else {
-                            lines.add(currentLine.toString())
+                            lines.add(currentLine.toString().trim())
                             currentLine = StringBuilder(word).append(" ")
                         }
                     }
-                    lines.add(currentLine.toString())
+                    if (currentLine.isNotEmpty()) lines.add(currentLine.toString().trim())
                     
-                    val maxLineWidth = lines.maxOf { restrictionPaint.measureText(it) }
+                    val maxLineWidth = if (lines.isNotEmpty()) lines.maxOf { restrictionPaint.measureText(it) } else 0f
+                    val contentWidth = max(maxLineWidth + 32f, topLabelWidth + 24f)
                     val lineHeight = 38f
+                    val infoHeight = (lines.size * lineHeight) + 24f
+                    
                     val infoRect = RectF(
                         box.left,
                         box.bottom,
-                        box.left + maxLineWidth + 16f,
-                        box.bottom + (lines.size * lineHeight) + 10f
+                        box.left + contentWidth,
+                        box.bottom + infoHeight
                     )
                     
+                    // Draw Card Background
                     nativeCanvas.drawRect(infoRect, labelBackgroundPaint)
+                    
+                    // Draw Left Accent Border
+                    boxPaint.strokeWidth = 10f
+                    nativeCanvas.drawLine(infoRect.left, infoRect.top, infoRect.left, infoRect.bottom, boxPaint)
+                    boxPaint.strokeWidth = 6f // Reset
+                    
+                    // Draw Text Lines
                     lines.forEachIndexed { index, line ->
                         nativeCanvas.drawText(
                             line,
-                            infoRect.left + 8f,
-                            box.bottom + 35f + (index * lineHeight),
+                            infoRect.left + 20f,
+                            box.bottom + 42f + (index * lineHeight),
                             restrictionPaint
                         )
                     }

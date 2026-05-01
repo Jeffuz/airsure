@@ -61,8 +61,10 @@ class ObjectDetectionAnalyzer(
 
                 var dangerDetected = false
                 val detections = bbList.map { box ->
-                    box.travelInfo = RestrictionManager.getRestriction(box.label, selectedCountry)
-                    if (box.travelInfo.level == RestrictionManager.Level.DANGER) {
+                    val info = RestrictionManager.getRestriction(box.label, selectedCountry)
+                    box.travelInfo = info
+                    
+                    if (info.level == RestrictionManager.Level.DANGER) {
                         dangerDetected = true
                     }
                     
@@ -70,7 +72,7 @@ class ObjectDetectionAnalyzer(
                     val currentTime = System.currentTimeMillis()
                     if (currentTime - lastAnnouncementTime > 3000) {
                         if (!announcedLabels.contains(box.label)) {
-                            announceItem(box.label, box.travelInfo.message)
+                            announceItem(box.label, info.message)
                             announcedLabels.add(box.label)
                             lastAnnouncementTime = currentTime
                             if (announcedLabels.size > 5) announcedLabels.clear()
@@ -79,9 +81,9 @@ class ObjectDetectionAnalyzer(
 
                     Detection(
                         box = RectF(box.left, box.top, box.right, box.bottom),
-                        label = box.label,
+                        label = (box.label ?: "unknown").trim(),
                         confidence = box.confidence,
-                        travelInfo = box.travelInfo,
+                        travelInfo = info,
                         classIdx = box.classIdx
                     )
                 }

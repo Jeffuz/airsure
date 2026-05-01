@@ -1,6 +1,7 @@
 package com.example.efficientdet_lite.vision
 
 import android.graphics.RectF
+import com.qualcomm.qti.objectdetection.RestrictionManager
 import kotlin.math.max
 import kotlin.math.min
 
@@ -14,6 +15,7 @@ class DetectionTracker(
         val label: String,
         val confidence: Float,
         val box: RectF,
+        val travelInfo: RestrictionManager.TravelInfo?,
         val hits: Int,
         val missedFrames: Int,
     )
@@ -34,7 +36,7 @@ class DetectionTracker(
             for (index in detections.indices) {
                 if (matched[index] || detections[index].label != item.label) continue
                 val iou = iou(item.box, detections[index].box)
-                if (iou > bestIou) {
+                if ( BestIou(iou, bestIou) ) {
                     bestIou = iou
                     bestIndex = index
                 }
@@ -45,6 +47,7 @@ class DetectionTracker(
                 updated += item.copy(
                     confidence = detection.confidence,
                     box = lerp(item.box, detection.box, smoothingAlpha),
+                    travelInfo = detection.travelInfo, // Always update to latest info
                     hits = item.hits + 1,
                     missedFrames = 0,
                 )
@@ -60,6 +63,7 @@ class DetectionTracker(
                     label = detection.label,
                     confidence = detection.confidence,
                     box = RectF(detection.box),
+                    travelInfo = detection.travelInfo,
                     hits = 1,
                     missedFrames = 0,
                 )
@@ -69,7 +73,18 @@ class DetectionTracker(
         items = updated
         return updated
             .filter { it.hits >= minHitsToConfirm }
-            .map { Detection(box = RectF(it.box), label = it.label, confidence = it.confidence) }
+            .map { 
+                Detection(
+                    box = RectF(it.box), 
+                    label = it.label, 
+                    confidence = it.confidence,
+                    travelInfo = it.travelInfo
+                ) 
+            }
+    }
+    
+    private fun BestIou(iou: Float, currentBest: Float): Boolean {
+        return iou > currentBest
     }
 
     private fun lerp(from: RectF, to: RectF, alpha: Float) = RectF(
