@@ -76,7 +76,13 @@ fun AirSureNavHost() {
                     navController.navigate(Routes.ITEM_DETAILS) {
                         popUpTo(Routes.HOME)
                     }
-                }
+                },
+                onHomeClick = {
+                    navController.navigate(Routes.HOME)
+                },
+                onListenClick = {
+                    navController.navigate(Routes.ANNOUNCEMENTS)
+                },
             )
         }
 
