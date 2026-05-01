@@ -1,1 +1,5 @@
+# Allow the debug APK zip to be tracked
+!/build/outputs/apk/debug/app-debug.zip
+
+# Ignore everything else in build (including the .apk)
 /build

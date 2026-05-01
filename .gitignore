@@ -1,7 +1,5 @@
-<<<<<<< HEAD
 # --- Android / Gradle ---
 .gradle/
-build/
 captures/
 local.properties
 .externalNativeBuild
@@ -11,6 +9,14 @@ local.properties
 *.jks
 *.keystore
 
+# Specifically allow the debug APK ZIP
+!app/build/outputs/apk/debug/app-debug.zip
+
+# Ignore other build outputs
+build/
+app/build/
+**/build/
+
 # --- Android Studio / IntelliJ ---
 .idea/
 *.iml
@@ -19,7 +25,7 @@ local.properties
 .settings/
 .classpath
 
-# --- Python (CRITICAL: This stops the 400MB+ files) ---
+# --- Python ---
 aihub_env/
 venv/
 env/
@@ -44,8 +50,6 @@ coverage.xml
 
 # --- Large Assets (handled by Git LFS) ---
 *.hprof
-# We don't ignore .tflite, but we ensure they are tracked by LFS instead of raw Git
-# If you want to be extra safe, you can ignore all large binaries:
 *.so
 *.dylib
 *.dll
@@ -59,28 +63,3 @@ coverage.xml
 .Trashes
 ehthumbs.db
 Thumbs.db
-=======
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-
-.venv/
-venv/
-__pycache__/
-*.pyc
-
-build/
-**/build/
->>>>>>> main

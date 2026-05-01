@@ -53,6 +53,42 @@ Employs a local Whisper model to transcribe and process airport announcements.
 3.  Deploy: Select your device and click Run.
 4.  Backend Selection: The app automatically attempts to use the NPU, falling back to GPU or CPU if unavailable. You can monitor performance via logcat tags: EfficientDetPerf and AudioDebug.
 
+### Exporting to APK
+
+To generate an APK for installation:
+
+#### Via Android Studio
+1.  Go to **Build** > **Build Bundle(s) / APK(s)** > **Build APK(s)**.
+2.  Android Studio will generate the APK and show a notification with a **Locate** link to open the folder.
+
+#### Via Command Line
+To build using the command line:
+
+1.  **Open Terminal:** Use the **Terminal** tab at the bottom of Android Studio, or open a Command Prompt/PowerShell (Windows) or Terminal (macOS/Linux).
+2.  **Navigate to Project Root:** Ensure you are in the `airsure` directory.
+3.  **Run the Build Task:** Use the following command based on your OS:
+
+**Windows:**
+```bat
+./gradlew.bat :app:assembleDebug
+```
+
+> **Note:** If you see a `JAVA_HOME is not set` error, run the command for your terminal type:
+> 
+> **For PowerShell (default):**
+> `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"; $env:Path += ";$env:JAVA_HOME\bin"`
+> 
+> **For Bash (e.g., Git Bash):**
+> `export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"; export PATH="$JAVA_HOME/bin:$PATH"`
+
+**Linux/macOS:**
+```bash
+./gradlew :app:assembleDebug
+```
+
+The generated APK will be located at:
+`app/build/outputs/apk/debug/app-debug.apk`
+
 ## Testing Debug Tools
 The Flight Alerts screen includes a debug menu (accessible via the "Listening" indicator) to simulate various scenarios:
 *   Test Boarding/Delay/Gate Change announcements via local assets.

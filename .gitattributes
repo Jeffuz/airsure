@@ -1,3 +1,5 @@
 *.tflite filter=lfs diff=lfs merge=lfs -text
+*.apk filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
 app/src/main/assets/distil_whisper_encoder.tflite filter=lfs diff=lfs merge=lfs -text
 app/src/main/assets/distil_whisper_decoder.tflite filter=lfs diff=lfs merge=lfs -text
