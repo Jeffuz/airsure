@@ -1,84 +1,62 @@
-# EfficientDet-Lite Android Sample
+# AirSure: AI-Powered Travel Assistant
 
-CameraX + LiteRT object detection using an EfficientDet-Lite TFLite model.
+AirSure is an advanced Android travel companion that leverages on-device AI to help travelers manage their airport experience. By combining real-time computer vision and local speech processing, AirSure provides automated carry-on size checking and proactive flight alert monitoring.
 
-The app uses the backend ladder:
+## Key Features
 
-`NPU -> GPU -> CPU`
+### 1. Smart Carry-On Scanner (Vision AI)
+Uses EfficientDet-Lite via LiteRT to detect and analyze luggage in real-time.
+*   Object Detection: Real-time identification of carry-on bags and personal items.
+*   Restriction Management: Automatically compares detected items against airline-specific size regulations.
+*   Hardware Acceleration: Optimized for Qualcomm NPUs to ensure high-speed, low-power inference.
 
-It logs the selected backend, tensor checks, and inference timings with tags like
-`EfficientDetDetector`, `LiteRTDebugger`, and `EfficientDetPerf`.
+### 2. Live Flight Alerts (Audio AI)
+Employs a local Whisper model to transcribe and process airport announcements.
+*   On-Device Transcription: Privacy-focused audio processing that never sends your voice to the cloud.
+*   Pattern Matching: Intelligently listens for your specific flight number to detect:
+    *   Gate Changes
+    *   Flight Delays
+    *   Final Boarding Calls
+*   Live Transcription UI: Real-time visual feedback of what the AI is hearing at the gate.
 
+### 3. Integrated Travel Experience
+*   Boarding Pass Integration: Store flight details locally for targeted monitoring.
+*   Modern UI: Built with Jetpack Compose for a smooth, fluid, and responsive user experience.
 
-## Build 
+## Technical Stack
 
-**Option 1: Android Studio (Recommended)**
-1. Open the project in Android Studio
-2. Wait for **Gradle sync** to finish
-3. Connect your device (or use emulator)
-4. Select your device in the top bar
-5. Click **Run** (or press Shift + F10)
+*   Language: Kotlin & Java
+*   UI Framework: Jetpack Compose (Material 3)
+*   AI Engine: Google LiteRT (formerly TFLite)
+*   Models:
+    *   Vision: efficientdet_lite0 (Quantized for NPU)
+    *   Audio: Distil-Whisper (Encoder/Decoder architecture)
+*   Hardware Optimization: Qualcomm AI Stack (QNN) for NPU acceleration.
+*   Camera: CameraX API for robust image capture.
 
-**Option 2: Command Line (Windows):**
+## Project Structure
 
-```bat
-set JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
-./gradlew.bat :app:assembleDebug
-```
+*   app/src/main/java/com/example/efficientdet_lite/vision/: Computer vision logic, analyzers, and camera implementation.
+*   app/src/main/java/com/example/efficientdet_lite/audio/: Whisper model integration, audio recording, and transcription services.
+*   app/src/main/java/com/example/efficientdet_lite/announcements/: Logic for processing transcripts and matching flight alerts.
+*   app/src/main/assets/: Contains pre-trained TFLite models (detector.tflite, whisper_encoder/decoder).
 
-**Option 3: Command Line (Linux/ macOS)**
-```bash
-export JAVA_HOME="/opt/android-studio/jbr"
-./gradlew :app:assembleDebug
-```
+## Getting Started
 
-## Quantization
+### Prerequisites
+*   Android Studio Ladybug or newer.
+*   A physical Android device (Qualcomm Snapdragon 8 Gen 1 or newer recommended for NPU features).
 
-If you have an EfficientDet SavedModel and need to produce a TFLite model:
+### Build & Run
+1.  Clone the repository.
+2.  Open in Android Studio: Let Gradle sync and download dependencies.
+3.  Deploy: Select your device and click Run.
+4.  Backend Selection: The app automatically attempts to use the NPU, falling back to GPU or CPU if unavailable. You can monitor performance via logcat tags: EfficientDetPerf and AudioDebug.
 
-```bash
-python scripts/quantize_efficientdet_tflite.py \
-  --saved-model-dir build/efficientdet_saved_model \
-  --full-int8 \
-  --calib-dir /path/to/jpeg_calibration_images
-```
+## Testing Debug Tools
+The Flight Alerts screen includes a debug menu (accessible via the "Listening" indicator) to simulate various scenarios:
+*   Test Boarding/Delay/Gate Change announcements via local assets.
+*   Clear active alerts to reset the state.
 
-To auto-download the Kaggle/TFHub EfficientDet-Lite SavedModel source:
-
-```bash
-python scripts/quantize_efficientdet_tflite.py --full-int8
-```
-
-To copy the converted model into app assets:
-
-```bash
-python scripts/quantize_efficientdet_tflite.py --full-int8 --copy-to-assets
-```
-
-Note: the Kaggle SavedModel path may require `--allow-select-tf-ops`, which
-produces a Flex/Select-TF model. That is useful as a conversion fallback, but it
-is not ideal for Qualcomm NPU benchmarking. Prefer the downloaded EfficientDet
-Lite TFLite model for NPU testing.
-
-## Download Model 
-
-The app expects (already included with clone):
-
-`app/src/main/assets/efficientdet_lite0_detection.tflite`
-
-Download or refresh it with:
-
-```bash
-python scripts/download_efficientdet_lite.py --variant lite0
-```
-
-The included model is already quantized for byte input (`uint8`) and has mostly
-`int8` tensors, so it is the preferred first model to test on Qualcomm NPU.
-
-## Debugging
-
-If the model is missing from the assets after all the steps, run the following:
-
-```bash
-curl -L "https://tfhub.dev/tensorflow/lite-model/efficientdet/lite0/detection/default/1?lite-format=tflite" -o app/src/main/assets/efficientdet_lite0_detection.tflite
-```
+---
+Built for the future of private, on-device AI assistance.
