@@ -2,97 +2,86 @@
 
 AirSure is an advanced Android travel companion that leverages on-device AI to help travelers manage their airport experience. By combining real-time computer vision and local speech processing, AirSure provides automated carry-on size checking and proactive flight alert monitoring.
 
+## Team Members
+*   **Mathew Raju** - mathew2002raj@gmail.com
+*   **Jeff Zhang** - jeffzhang0049@gmail.com
+*   **Mona Zhao** - monazhao59@gmail.com
+
+## Project Description
+AirSure is designed to reduce the stress of air travel by providing intelligent, private, and offline-first assistance. 
+*   **Vision AI**: Uses **YOLOv11** (sourced from Qualcomm AI Hub) to scan carry-on luggage against airline restrictions.
+*   **Audio AI**: Employs a local **Distil-Whisper** model (sourced from Qualcomm AI Hub) to transcribe airport announcements and filter for specific flight alerts (gate changes, delays).
+*   **Edge Processing**: The majority of the application logic and all AI inference runs locally on the device for maximum privacy and low latency.
+
 ## Key Features
 
 ### 1. Smart Carry-On Scanner (Vision AI)
-Uses EfficientDet-Lite via LiteRT to detect and analyze luggage in real-time.
-*   Object Detection: Real-time identification of carry-on bags and personal items.
+Uses **YOLOv11** via LiteRT to detect and analyze luggage in real-time.
+*   Object Detection: Real-time identification of carry-on bags.
 *   Restriction Management: Automatically compares detected items against airline-specific size regulations.
-*   Hardware Acceleration: Optimized for Qualcomm NPUs to ensure high-speed, low-power inference.
+*   Hardware Acceleration: Optimized for Qualcomm NPUs via the Qualcomm AI Stack.
 
 ### 2. Live Flight Alerts (Audio AI)
-Employs a local Whisper model to transcribe and process airport announcements.
-*   On-Device Transcription: Privacy-focused audio processing that never sends your voice to the cloud.
-*   Pattern Matching: Intelligently listens for your specific flight number to detect:
-    *   Gate Changes
-    *   Flight Delays
-    *   Final Boarding Calls
-*   Live Transcription UI: Real-time visual feedback of what the AI is hearing at the gate.
+Employs a local **Distil-Whisper** model to transcribe airport announcements.
+*   On-Device Transcription: Privacy-focused audio processing using hardware-optimized models from Qualcomm AI Hub.
+*   Pattern Matching: Intelligently listens for specific flight numbers for gate changes, delays, and final calls.
+*   Live Transcription UI: Real-time visual feedback of the transcription process.
 
-### 3. Integrated Travel Experience
-*   Boarding Pass Integration: Store flight details locally for targeted monitoring.
-*   Modern UI: Built with Jetpack Compose for a smooth, fluid, and responsive user experience.
-
-## Technical Stack
-
-*   Language: Kotlin & Java
-*   UI Framework: Jetpack Compose (Material 3)
-*   AI Engine: Google LiteRT (formerly TFLite)
-*   Models:
-    *   Vision: efficientdet_lite0 (Quantized for NPU)
-    *   Audio: Distil-Whisper (Encoder/Decoder architecture)
-*   Hardware Optimization: Qualcomm AI Stack (QNN) for NPU acceleration.
-*   Camera: CameraX API for robust image capture.
-
-## Project Structure
-
-*   app/src/main/java/com/example/efficientdet_lite/vision/: Computer vision logic, analyzers, and camera implementation.
-*   app/src/main/java/com/example/efficientdet_lite/audio/: Whisper model integration, audio recording, and transcription services.
-*   app/src/main/java/com/example/efficientdet_lite/announcements/: Logic for processing transcripts and matching flight alerts.
-*   app/src/main/assets/: Contains pre-trained TFLite models (detector.tflite, whisper_encoder/decoder).
-
-## Getting Started
+## Setup Instructions (From Scratch)
 
 ### Prerequisites
-*   Android Studio Ladybug or newer.
-*   A physical Android device (Qualcomm Snapdragon 8 Gen 1 or newer recommended for NPU features).
+*   **Android Studio Ladybug** (2024.2.1) or newer.
+*   **Android SDK 31+**.
+*   **Physical Device**: Qualcomm Snapdragon 8 Gen 1 or newer recommended for NPU acceleration.
+*   **Git LFS**: Ensure Git Large File Storage is installed to handle model files.
 
-### Build & Run
-1.  Clone the repository.
-2.  Open in Android Studio: Let Gradle sync and download dependencies.
-3.  Deploy: Select your device and click Run.
-4.  Backend Selection: The app automatically attempts to use the NPU, falling back to GPU or CPU if unavailable. You can monitor performance via logcat tags: EfficientDetPerf and AudioDebug.
+### Dependencies
+The project uses the following major dependencies:
+*   **LiteRT (TFLite)**: For on-device model inference.
+*   **Jetpack Compose**: For the modern UI layer.
+*   **CameraX**: For high-performance camera access.
+*   **Qualcomm AI Stack (QNN)**: For hardware-specific optimizations.
 
-### Exporting to APK
+### Build Steps
+1.  **Clone the Repository**: `git clone <repository-url>`
+2.  **Pull Large Files**: Run `git lfs pull` to ensure models are downloaded.
+3.  **Open in Android Studio**: Let Gradle sync and download all dependencies.
+4.  **Configure JAVA_HOME**: If building via CLI, ensure your path points to the bundled JDK in Android Studio (`jbr`).
+5.  **Run**: Select your device and click **Run** (Shift + F10).
 
-To generate an APK for installation:
+## Run and Usage Instructions
 
-#### Via Android Studio
-1.  Go to **Build** > **Build Bundle(s) / APK(s)** > **Build APK(s)**.
-2.  Android Studio will generate the APK and show a notification with a **Locate** link to open the folder.
+### Using the Carry-On Scanner
+1.  Navigate to the **Scanner** tab.
+2.  Point the camera at your luggage.
+3.  The AI will detect the item and display its classification.
+4.  View "Carry-on Status" to see if it matches standard airline dimensions.
 
-#### Via Command Line
-To build using the command line:
+### Using Flight Alerts
+1.  Enter your **Flight Code** in the Boarding Pass section.
+2.  Navigate to the **Alerts** tab.
+3.  The device will begin listening locally.
+4.  When an announcement is detected, it will be transcribed live.
+5.  If a match is found for your flight, an alert card (Gate Change/Delay) will appear.
 
-1.  **Open Terminal:** Use the **Terminal** tab at the bottom of Android Studio, or open a Command Prompt/PowerShell (Windows) or Terminal (macOS/Linux).
-2.  **Navigate to Project Root:** Ensure you are in the `airsure` directory.
-3.  **Run the Build Task:** Use the following command based on your OS:
+## Technical Stack
+*   **Language**: Kotlin & Java
+*   **UI Framework**: Jetpack Compose (Material 3)
+*   **AI Engine**: Google LiteRT
+*   **Models**: **YOLOv11** (Vision), **Distil-Whisper** (Audio) - Both optimized via Qualcomm AI Hub.
 
-**Windows:**
-```bat
-./gradlew.bat :app:assembleDebug
-```
+## Tests and Verification
+*   **Unit Tests**: Located in `app/src/test`. Run via `./gradlew test`.
+*   **Logic Verification**: Use the **Debug Menu** in the Flight Alerts screen (click the "Listening" indicator) to simulate test announcements via pre-loaded assets.
 
-> **Note:** If you see a `JAVA_HOME is not set` error, run the command for your terminal type:
-> 
-> **For PowerShell (default):**
-> `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"; $env:Path += ";$env:JAVA_HOME\bin"`
-> 
-> **For Bash (e.g., Git Bash):**
-> `export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"; export PATH="$JAVA_HOME/bin:$PATH"`
+## Notes
+*   **Privacy**: All audio recording and transcription stays on-device. No data is sent to external servers.
+*   **Performance**: NPU acceleration is automatically selected if supported by the hardware, falling back to GPU or CPU otherwise.
 
-**Linux/macOS:**
-```bash
-./gradlew :app:assembleDebug
-```
+## References
+*   [Qualcomm AI Hub](https://aihub.qualcomm.com/)
+*   [Google LiteRT Documentation](https://ai.google.dev/edge/litert)
+*   [Qualcomm AI Stack](https://www.qualcomm.com/products/technology/processors/snapdragon-8-gen-1)
 
-The generated APK will be located at:
-`app/build/outputs/apk/debug/app-debug.apk`
-
-## Testing Debug Tools
-The Flight Alerts screen includes a debug menu (accessible via the "Listening" indicator) to simulate various scenarios:
-*   Test Boarding/Delay/Gate Change announcements via local assets.
-*   Clear active alerts to reset the state.
-
----
-Built for the future of private, on-device AI assistance.
+## License
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
