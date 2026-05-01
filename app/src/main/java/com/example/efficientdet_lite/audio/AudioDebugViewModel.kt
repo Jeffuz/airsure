@@ -17,15 +17,35 @@ class AudioDebugViewModel(application: Application) : AndroidViewModel(applicati
     private val audioRecorder = AudioRecorder()
     private val whisperModel = WhisperModel(application)
     private var recordingJob: Job? = null
-    
+
     var amplitude by mutableStateOf(0f)
         private set
     
     var isRecording by mutableStateOf(false)
         private set
 
-    var transcription by mutableStateOf("Press start and speak...")
+    var transcription by mutableStateOf("AI not loaded. Tap below.")
         private set
+
+    var isAILoaded by mutableStateOf(false)
+        private set
+
+    fun loadAI() {
+        viewModelScope.launch {
+            try {
+                whisperModel.loadModels { progress ->
+                    transcription = progress
+                }
+                isAILoaded = whisperModel.isLoaded
+            } catch (e: Exception) {
+                Log.e("AudioDebug", "Failed to load models", e)
+                transcription = "Error: ${e.message}"
+            } catch (e: Error) {
+                Log.e("AudioDebug", "Critical error", e)
+                transcription = "OOM / Critical Error"
+            }
+        }
+    }
 
     private val audioBuffer = mutableListOf<Float>()
 

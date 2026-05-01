@@ -64,8 +64,17 @@ fun AudioVisualizer(viewModel: AudioDebugViewModel) {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        Button(onClick = { viewModel.toggleRecording() }) {
-            Text(if (viewModel.isRecording) "Stop Listening" else "Start Whisper Test")
+        if (!viewModel.isAILoaded) {
+            Button(
+                onClick = { viewModel.loadAI() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1F6BFF))
+            ) {
+                Text("Load Whisper AI (660MB)")
+            }
+        } else {
+            Button(onClick = { viewModel.toggleRecording() }) {
+                Text(if (viewModel.isRecording) "Stop Listening" else "Start Whisper Test")
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))

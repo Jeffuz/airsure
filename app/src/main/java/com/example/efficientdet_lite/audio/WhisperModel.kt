@@ -2,14 +2,17 @@ package com.example.efficientdet_lite.audio
 
 import android.content.Context
 import android.util.Log
+import com.google.ai.edge.litert.Accelerator
 import com.google.ai.edge.litert.CompiledModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class WhisperModel(private val context: Context) {
     private var encoderModel: CompiledModel? = null
     private var decoderModel: CompiledModel? = null
-    private val tokenizer = WhisperTokenizer(context)
+    private var tokenizer: WhisperTokenizer? = null
 
     companion object {
         private const val TAG = "WhisperModel"
@@ -20,17 +23,50 @@ class WhisperModel(private val context: Context) {
         private const val MASK_NEG = -100f
     }
 
-    init {
-        loadModels()
-    }
+    var isLoaded = false
+        private set
 
-    private fun loadModels() {
-        runCatching {
-            encoderModel = CompiledModel.create(context.assets, ENCODER_ASSET)
-            decoderModel = CompiledModel.create(context.assets, DECODER_ASSET)
-            Log.d(TAG, "Models loaded successfully")
-        }.onFailure { e ->
-            Log.e(TAG, "Error loading models", e)
+    suspend fun loadModels(onProgress: (String) -> Unit = {}) = withContext(Dispatchers.IO) {
+        if (isLoaded) {
+            withContext(Dispatchers.Main) { onProgress("AI Ready") }
+            return@withContext
+        }
+        
+        try {
+            withContext(Dispatchers.Main) { onProgress("1/3: Tokenizer...") }
+            tokenizer = WhisperTokenizer(context)
+            System.gc()
+            
+            val options = CompiledModel.Options(Accelerator.CPU)
+            
+            // DIAGNOSTIC: Load Decoder FIRST to see if it's a file-specific issue or a RAM issue
+            Log.d(TAG, "Step 2/3: Loading Decoder (290MB)...")
+            withContext(Dispatchers.Main) { onProgress("2/3: Decoder (290MB)...") }
+            
+            decoderModel = CompiledModel.create(context.assets, DECODER_ASSET, options)
+            Log.d(TAG, "Decoder loaded. Resting...")
+            
+            System.gc()
+            kotlinx.coroutines.delay(2000) // Longer rest for the OS
+
+            Log.d(TAG, "Step 3/3: Loading Encoder (370MB)...")
+            withContext(Dispatchers.Main) { onProgress("3/3: Encoder (370MB)...") }
+            
+            encoderModel = CompiledModel.create(context.assets, ENCODER_ASSET, options)
+            
+            isLoaded = true
+            withContext(Dispatchers.Main) { onProgress("AI Ready") }
+            Log.d(TAG, "Success! 660MB AI models loaded.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Load failed", e)
+            withContext(Dispatchers.Main) { onProgress("Fail: ${e.message}") }
+            close()
+            throw e
+        } catch (e: OutOfMemoryError) {
+            Log.e(TAG, "CRITICAL OOM: Emulator needs more RAM (4GB+)")
+            withContext(Dispatchers.Main) { onProgress("Error: Out of Memory") }
+            close()
+            throw e
         }
     }
 
@@ -62,6 +98,7 @@ class WhisperModel(private val context: Context) {
     fun transcribe(audioData: FloatArray): String {
         val encoder = encoderModel ?: return "Encoder not ready"
         val decoder = decoderModel ?: return "Decoder not ready"
+        val tok = tokenizer ?: return "Tokenizer not ready"
 
         try {
             val mel = AudioPreprocessor.getMelSpectrogram(audioData)
@@ -81,7 +118,7 @@ class WhisperModel(private val context: Context) {
             Log.d(TAG, "Encoder finished. Cross-caches collected: ${crossCaches.size}")
 
             val generatedTokens = mutableListOf<Int>()
-            var currentToken = tokenizer.startOfTranscript
+            var currentToken = tok.startOfTranscript
             var selfCaches: List<FloatArray>? = null
             val attentionMask = FloatArray(MEAN_DECODE_LEN) { MASK_NEG }
 
@@ -124,20 +161,20 @@ class WhisperModel(private val context: Context) {
                 decoder.run(dInputs, dOutputs)
 
                 val logits = dOutputs[0].readFloat()
-                val nextToken = logits.indices.maxByOrNull { logits[it] } ?: tokenizer.endOfText
+                val nextToken = logits.indices.maxByOrNull { logits[it] } ?: tok.endOfText
 
-                Log.d(TAG, "Step $step: token=$nextToken text='${tokenizer.decode(listOf(nextToken))}'")
+                Log.d(TAG, "Step $step: token=$nextToken text='${tok.decode(listOf(nextToken))}'")
 
                 selfCaches = dOutputs.drop(1).map { it.readFloat() }
 
                 dInputs.forEach { it.close() }
                 dOutputs.forEach { it.close() }
 
-                if (nextToken == tokenizer.endOfText) {
+                if (nextToken == tok.endOfText) {
                     break
                 }
 
-                if (!tokenizer.isSpecialToken(nextToken)) {
+                if (!tok.isSpecialToken(nextToken)) {
                     generatedTokens.add(nextToken)
                 }
                 currentToken = nextToken
@@ -146,7 +183,7 @@ class WhisperModel(private val context: Context) {
             encoderInputs.forEach { it.close() }
             encoderOutputs.forEach { it.close() }
 
-            return tokenizer.decode(generatedTokens)
+            return tok.decode(generatedTokens)
         } catch (e: Exception) {
             Log.e(TAG, "Inference failed", e)
             return "Error: ${e.message}"
