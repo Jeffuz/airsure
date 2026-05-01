@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.efficientdet_lite.announcements.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -18,6 +19,15 @@ class AudioDebugViewModel(application: Application) : AndroidViewModel(applicati
     private val whisperModel = WhisperModel(application)
     private var recordingJob: Job? = null
 
+    companion object {
+        private const val SAMPLE_RATE = 16000
+        private const val CHUNK_SECONDS = 5
+        private const val OVERLAP_SECONDS = 1
+        private const val CHUNK_SIZE = SAMPLE_RATE * CHUNK_SECONDS
+        private const val OVERLAP_SIZE = SAMPLE_RATE * OVERLAP_SECONDS
+    }
+
+    // --- State Variables ---
     var amplitude by mutableStateOf(0f)
         private set
     
@@ -29,6 +39,23 @@ class AudioDebugViewModel(application: Application) : AndroidViewModel(applicati
 
     var isAILoaded by mutableStateOf(false)
         private set
+
+    // For the MVP Demo: Track a specific flight
+    var userFlight by mutableStateOf(UserFlight(
+        flightNumber = "AA123",
+        from = "LAX",
+        to = "JFK",
+        gate = null
+    ))
+        private set
+
+    // The result of the parsing logic
+    var activeAlert by mutableStateOf<FlightAnnouncement?>(null)
+        private set
+
+    private val audioBuffer = mutableListOf<Float>()
+
+    // --- Core Logic ---
 
     fun loadAI() {
         viewModelScope.launch {
@@ -47,7 +74,21 @@ class AudioDebugViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private val audioBuffer = mutableListOf<Float>()
+    /**
+     * Unified handler for all transcriptions (Mic or Asset)
+     */
+    private suspend fun handleTranscript(text: String) {
+        withContext(Dispatchers.Main) {
+            transcription = text.ifBlank { "(No speech detected)" }
+            
+            // Run matching logic
+            val announcement = AnnouncementProcessor.process(text, userFlight)
+            if (announcement != null) {
+                Log.i("AudioDebug", "MATCH FOUND: ${announcement.type} for ${announcement.matchedFlightNumber}")
+                activeAlert = announcement
+            }
+        }
+    }
 
     fun toggleRecording() {
         if (isRecording) {
@@ -59,28 +100,31 @@ class AudioDebugViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun start() {
         isRecording = true
-        transcription = "Listening (wait 5s)..."
-        audioBuffer.clear()
+        activeAlert = null // Reset alert when starting new listen
+        transcription = "Listening..."
+        synchronized(audioBuffer) { audioBuffer.clear() }
         
         recordingJob = viewModelScope.launch(Dispatchers.Default) {
             try {
                 audioRecorder.startRecording().collect { buffer ->
                     val peak = buffer.maxOfOrNull { abs(it) } ?: 0f
                     
-                    audioBuffer.addAll(buffer.toList())
+                    var toTranscribe: FloatArray? = null
                     
-                    // Wait for 5 seconds of audio for better recognition
-                    if (audioBuffer.size >= 16000 * 5) {
-                        val currentAudio = audioBuffer.toFloatArray()
-                        audioBuffer.clear() 
-                        
-                        withContext(Dispatchers.Main) { transcription = "Transcribing..." }
-                        
-                        val result = whisperModel.transcribe(currentAudio)
-                        
-                        withContext(Dispatchers.Main) {
-                            transcription = result.ifBlank { "(No speech detected)" }
+                    synchronized(audioBuffer) {
+                        audioBuffer.addAll(buffer.toList())
+                        if (audioBuffer.size >= CHUNK_SIZE) {
+                            toTranscribe = audioBuffer.toFloatArray()
+                            val overlap = audioBuffer.takeLast(OVERLAP_SIZE)
+                            audioBuffer.clear()
+                            audioBuffer.addAll(overlap)
                         }
+                    }
+
+                    toTranscribe?.let { audioData ->
+                        withContext(Dispatchers.Main) { transcription = "Transcribing..." }
+                        val result = whisperModel.transcribe(audioData)
+                        handleTranscript(result)
                     }
 
                     withContext(Dispatchers.Main) {
@@ -106,12 +150,29 @@ class AudioDebugViewModel(application: Application) : AndroidViewModel(applicati
 
     fun runAssetTest() {
         viewModelScope.launch(Dispatchers.Default) {
+            activeAlert = null
             withContext(Dispatchers.Main) { transcription = "Running asset test..." }
             val result = whisperModel.transcribeFromAsset("test_audio.wav")
-            withContext(Dispatchers.Main) {
-                transcription = "Test Result: $result"
-            }
+            handleTranscript(result)
         }
+    }
+
+    fun runLogicTest() {
+        viewModelScope.launch {
+            activeAlert = null
+            val testTranscript = "Attention passengers, American Airlines flight 123 is now boarding at Gate 24B."
+            transcription = testTranscript
+            
+            // This will trigger handleTranscript just like a real voice would
+            handleTranscript(testTranscript)
+            
+            Log.d("MVP_TEST", "User Flight: ${userFlight.flightNumber}")
+            Log.d("MVP_TEST", "Processed Result: $activeAlert")
+        }
+    }
+
+    fun clearAlert() {
+        activeAlert = null
     }
 
     override fun onCleared() {
