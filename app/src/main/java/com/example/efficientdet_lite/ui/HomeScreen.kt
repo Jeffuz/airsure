@@ -77,7 +77,8 @@ private val SoftYellow = Color(0xFFFFF7E6)
 @Composable
 fun HomeScreen(
     onScanCarryOnClick: () -> Unit,
-    onAnnouncementsClick: () -> Unit
+    onAnnouncementsClick: () -> Unit,
+    onBoardingPassClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -128,7 +129,9 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            BoardingPassCard()
+            BoardingPassCard(
+                onClick = onBoardingPassClick
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -245,9 +248,13 @@ private fun HomeHeader() {
 }
 
 @Composable
-private fun BoardingPassCard() {
+private fun BoardingPassCard(
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
         border = BorderStroke(1.dp, BorderBlue),
         colors = CardDefaults.cardColors(

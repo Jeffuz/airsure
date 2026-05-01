@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.efficientdet_lite.announcements.AnnouncementScreen
 import com.example.efficientdet_lite.announcements.CarryOnScannerScreen
+import com.example.efficientdet_lite.ui.BoardingPassFormScreen
 import com.example.efficientdet_lite.ui.HomeScreen
 import com.example.efficientdet_lite.ui.SplashScreen
 
@@ -37,6 +38,9 @@ fun AirSureNavHost() {
                 },
                 onAnnouncementsClick = {
                     navController.navigate(Routes.ANNOUNCEMENTS)
+                },
+                onBoardingPassClick = {
+                    navController.navigate(Routes.BOARDING_PASS)
                 }
             )
         }
@@ -51,6 +55,14 @@ fun AirSureNavHost() {
 
         composable(Routes.ANNOUNCEMENTS) {
             AnnouncementScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.BOARDING_PASS) {
+            BoardingPassFormScreen(
                 onBackClick = {
                     navController.popBackStack()
                 }
