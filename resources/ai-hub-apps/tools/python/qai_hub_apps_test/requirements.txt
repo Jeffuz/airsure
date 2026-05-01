@@ -1,0 +1,2 @@
+platformdirs
+setuptools-scm>=9,<10

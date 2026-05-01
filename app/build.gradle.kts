@@ -16,9 +16,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-//        ndk {
-//            abiFilters += "arm64-v8a"
-//        }
     }
 
     buildTypes {
@@ -31,11 +28,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -48,22 +45,24 @@ android {
             useLegacyPackaging = true
         }
     }
-//    bundle {
-//        deviceTargetingConfig = file("device_targeting_configuration.xml")
-//        deviceGroup {
-//            enableSplit = true
-//            defaultGroup = "other"
-//        }
-//    }
-    dynamicFeatures.addAll(
-        setOf(
-            ":litert_npu_runtime_libraries:qualcomm_runtime_v69",
-            ":litert_npu_runtime_libraries:qualcomm_runtime_v73",
-            ":litert_npu_runtime_libraries:qualcomm_runtime_v75",
-            ":litert_npu_runtime_libraries:qualcomm_runtime_v79",
-            ":litert_npu_runtime_libraries:qualcomm_runtime_v81",
-        ),
+/*
+    bundle {
+        deviceTargetingConfig {
+            config.set(file("device_targeting_configuration.xml"))
+        }
+    }
+*/
+    dynamicFeatures += setOf(
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v69",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v73",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v75",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v79",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v81"
     )
+}
+
+tasks.register("prepareKotlinBuildScriptModel") {
+    // Dummy task to satisfy the IDE sync
 }
 
 
@@ -82,6 +81,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.material)
+    implementation(libs.opencv)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.litert)
     implementation("androidx.compose.material3:material3:1.4.0")

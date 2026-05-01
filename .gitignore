@@ -1,3 +1,65 @@
+<<<<<<< HEAD
+# --- Android / Gradle ---
+.gradle/
+build/
+captures/
+local.properties
+.externalNativeBuild
+.cxx
+*.apk
+*.aar
+*.jks
+*.keystore
+
+# --- Android Studio / IntelliJ ---
+.idea/
+*.iml
+*.iws
+.project
+.settings/
+.classpath
+
+# --- Python (CRITICAL: This stops the 400MB+ files) ---
+aihub_env/
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.venv
+.env
+.tox
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.coveragerc
+.hypothesis/
+.pytest_cache/
+
+# --- Large Assets (handled by Git LFS) ---
+*.hprof
+# We don't ignore .tflite, but we ensure they are tracked by LFS instead of raw Git
+# If you want to be extra safe, you can ignore all large binaries:
+*.so
+*.dylib
+*.dll
+*.exe
+
+# --- OS Specific ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+=======
 *.iml
 .gradle
 /local.properties
@@ -21,3 +83,4 @@ __pycache__/
 
 build/
 **/build/
+>>>>>>> main

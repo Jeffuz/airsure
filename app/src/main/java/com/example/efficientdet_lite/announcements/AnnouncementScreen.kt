@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import com.example.efficientdet_lite.vision.EfficientDetCameraScreen
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.example.efficientdet_lite.audio.AudioDebugScreen
 
 
@@ -34,21 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-@Composable
-fun CarryOnScannerScreen(
-    onBackClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Button(onClick = onBackClick) {
-            Text("Back")
-        }
-
-        EfficientDetCameraScreen()
-    }
-}
 
 @Composable
 fun AnnouncementScreen(

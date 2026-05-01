@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">EfficientDET-Lite</string>
+    <string name="app_name">AIrsure</string>
+    <string name="request_permission">AIrsure needs camera permission to identify travel items.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="app_header">AIrsure</string>
+    <string name="device_tag">Safe Travel Assistant</string>
+    <string name="tfLiteModelAsset">detector.tflite</string>
+    <string name="tfLiteLabelsAsset">labels.txt</string>
 </resources>
