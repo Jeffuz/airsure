@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.R
+import com.example.efficientdet_lite.app.TripDetails
 import com.example.efficientdet_lite.ui.theme.AirSureBg
 import com.example.efficientdet_lite.ui.theme.AirSureBlue
 import com.example.efficientdet_lite.ui.theme.AirSurePrimary
@@ -50,7 +51,7 @@ import com.example.efficientdet_lite.ui.theme.AirSureProgressTrack
 import com.example.efficientdet_lite.ui.theme.AirSureSubtitle
 
 @Composable
-fun AudioDebugScreen(flightViewModel: FlightViewModel) {
+fun AudioDebugScreen(tripDetails: TripDetails) {
     val context = LocalContext.current
     val application = context.applicationContext as android.app.Application
     
@@ -73,7 +74,7 @@ fun AudioDebugScreen(flightViewModel: FlightViewModel) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (hasAudioPermission) {
             val audioViewModel: AudioDebugViewModel = viewModel(
-                factory = AudioDebugViewModel.Factory(application, flightViewModel)
+                factory = AudioDebugViewModel.Factory(application, tripDetails)
             )
 
             LaunchedEffect(audioViewModel) {

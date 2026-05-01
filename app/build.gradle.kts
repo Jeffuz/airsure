@@ -61,9 +61,9 @@ android {
     )
 }
 
-tasks.register("prepareKotlinBuildScriptModel") {
-    // Dummy task to satisfy the IDE sync
-}
+//tasks.register("prepareKotlinBuildScriptModel") {
+//    // Dummy task to satisfy the IDE sync
+//}
 
 
 tasks.register("prepareKotlinBuildScriptModel") {}

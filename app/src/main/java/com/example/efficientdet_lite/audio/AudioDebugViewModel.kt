@@ -9,7 +9,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.efficientdet_lite.announcements.*
+import com.example.efficientdet_lite.announcements.Announcement
+import com.example.efficientdet_lite.announcements.AnnouncementProcessor
+import com.example.efficientdet_lite.announcements.FlightAnnouncement
+import com.example.efficientdet_lite.app.TripDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -18,29 +21,23 @@ import kotlin.math.abs
 
 class AudioDebugViewModel(
     application: Application,
-    private val flightViewModel: FlightViewModel
+    private val tripDetails: TripDetails
 ) : AndroidViewModel(application) {
+
     private val audioRecorder = AudioRecorder()
     private val whisperModel = WhisperModel(application)
     private var recordingJob: Job? = null
 
     companion object {
         private const val SAMPLE_RATE = 16000
-        private const val CHUNK_SECONDS = 5
-        private const val OVERLAP_SECONDS = 1
-        private const val CHUNK_SIZE = SAMPLE_RATE * CHUNK_SECONDS
-        private const val OVERLAP_SIZE = SAMPLE_RATE * OVERLAP_SECONDS
-        
-        // Silence detection constants
         private const val SILENCE_THRESHOLD = 0.05f
         private const val SILENCE_DURATION_MS = 1500L
-        private const val MAX_RECORDING_MS = 15000L // 15s max to prevent OOM
+        private const val MAX_RECORDING_MS = 15000L
     }
 
-    // --- State Variables ---
     var amplitude by mutableStateOf(0f)
         private set
-    
+
     var isRecording by mutableStateOf(false)
         private set
 
@@ -62,10 +59,19 @@ class AudioDebugViewModel(
     var loadError by mutableStateOf<String?>(null)
         private set
 
-    val activeAlert get() = flightViewModel.activeAlert
+    var activeAlert by mutableStateOf<FlightAnnouncement?>(null)
+        private set
 
-    // Helper to get flight info from global state
-    private val userFlight: UserFlight get() = flightViewModel.userFlight ?: UserFlight("AA123", "LAX", "JFK")
+    private val currentTrip: TripDetails
+        get() = if (tripDetails.flight.isNotBlank()) {
+            tripDetails
+        } else {
+            TripDetails(
+                from = "LAX",
+                to = "JFK",
+                flight = "AA123"
+            )
+        }
 
     private val audioBuffer = mutableListOf<Float>()
     private var lastSpeechTime = 0L
@@ -144,13 +150,18 @@ class AudioDebugViewModel(
     private suspend fun handleTranscript(text: String) {
         withContext(Dispatchers.Main) {
             transcription = text.ifBlank { "(No speech detected)" }
-            
-            // Run matching logic
-            val announcement = AnnouncementProcessor.process(text, userFlight)
+
+            val announcement = AnnouncementProcessor.process(
+                transcript = text,
+                tripDetails = currentTrip
+            )
+
             if (announcement != null) {
-                Log.i("AudioDebug", "MATCH FOUND: ${announcement.type} for ${announcement.matchedFlightNumber}")
-                // Update global state
-                flightViewModel.setAlert(announcement)
+                Log.i(
+                    "AudioDebug",
+                    "MATCH FOUND: ${announcement.type} for ${announcement.matchedFlightNumber}"
+                )
+                activeAlert = announcement
             }
         }
     }
@@ -164,24 +175,30 @@ class AudioDebugViewModel(
     }
 
     private fun start() {
+        // dont record before whsiper loads
+        if (!isAILoaded) {
+            transcription = "AI is still loading..."
+            return
+        }
         isRecording = true
-        flightViewModel.clearAlert() // Reset alert when starting new listen
+        activeAlert = null // Reset alert when starting new listen
         transcription = "Listening..."
+
         lastSpeechTime = System.currentTimeMillis()
         hasSpeechStarted = false
         synchronized(audioBuffer) { audioBuffer.clear() }
-        
+
         recordingJob = viewModelScope.launch(Dispatchers.Default) {
             try {
                 audioRecorder.startRecording().collect { buffer ->
                     val peak = buffer.maxOfOrNull { abs(it) } ?: 0f
                     val currentTime = System.currentTimeMillis()
-                    
+
                     var toTranscribe: FloatArray? = null
-                    
+
                     synchronized(audioBuffer) {
                         audioBuffer.addAll(buffer.toList())
-                        
+
                         // Speech detection logic
                         if (peak > SILENCE_THRESHOLD) {
                             lastSpeechTime = currentTime
@@ -208,8 +225,8 @@ class AudioDebugViewModel(
                         withContext(Dispatchers.Main) { transcription = "Transcribing..." }
                         val result = whisperModel.transcribe(audioData)
                         handleTranscript(result)
-                        withContext(Dispatchers.Main) { 
-                            if (isRecording) transcription = "Listening again..." 
+                        withContext(Dispatchers.Main) {
+                            if (isRecording) transcription = "Listening again..."
                         }
                     }
 
@@ -236,11 +253,18 @@ class AudioDebugViewModel(
 
     fun runAssetTest(fileName: String = "test_audio.wav") {
         viewModelScope.launch(Dispatchers.Default) {
-            flightViewModel.clearAlert()
-            withContext(Dispatchers.Main) { transcription = "Running $fileName..." }
-            
-            // Look in the 'audio/' subfolder
-            val path = if (fileName == "test_audio.wav") fileName else "audio/$fileName"
+            activeAlert = null
+
+            withContext(Dispatchers.Main) {
+                transcription = "Running $fileName..."
+            }
+
+            val path = if (fileName == "test_audio.wav") {
+                fileName
+            } else {
+                "audio/$fileName"
+            }
+
             val result = whisperModel.transcribeFromAsset(path)
             handleTranscript(result)
         }
@@ -248,17 +272,18 @@ class AudioDebugViewModel(
 
     fun runLogicTest() {
         viewModelScope.launch {
-            flightViewModel.clearAlert()
-            val testTranscript = "Attention passengers, American Airlines flight 123 is now boarding at Gate 24B."
+            activeAlert = null
+
+            val testTranscript =
+                "Attention passengers, American Airlines flight 123 is now boarding at Gate 24B."
+
             transcription = testTranscript
-            
-            // This will trigger handleTranscript just like a real voice would
             handleTranscript(testTranscript)
         }
     }
 
     fun clearAlert() {
-        flightViewModel.clearAlert()
+        activeAlert = null
     }
 
     override fun onCleared() {
@@ -271,10 +296,10 @@ class AudioDebugViewModel(
      */
     class Factory(
         private val application: Application,
-        private val flightViewModel: FlightViewModel
+        private val tripDetails: TripDetails
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return AudioDebugViewModel(application, flightViewModel) as T
+            return AudioDebugViewModel(application, tripDetails) as T
         }
     }
 }
