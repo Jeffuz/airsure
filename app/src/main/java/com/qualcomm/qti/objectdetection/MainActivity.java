@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.efficientdet_lite.R;
 import com.qualcomm.tflite.AIHubDefaults;
 
 import java.io.IOException;

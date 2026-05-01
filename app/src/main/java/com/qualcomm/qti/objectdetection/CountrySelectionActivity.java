@@ -3,6 +3,8 @@ package com.qualcomm.qti.objectdetection;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.efficientdet_lite.R;
 import com.google.android.material.button.MaterialButton;
 
 public class CountrySelectionActivity extends AppCompatActivity {

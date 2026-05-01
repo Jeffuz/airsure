@@ -1,25 +1,8 @@
-plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
-}
+plugins { alias(libs.plugins.android.library) }
 
 android {
-    namespace = "com.qualcomm.qti.litert.runtime_strings"
-    compileSdk = 36
+  namespace = "com.google.ai.edge.litert.runtime_strings"
+  compileSdk = 36
 
-    defaultConfig {
-        minSdk = 31
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-}
-
-dependencies {
-    implementation(libs.androidx.core.ktx)
+  defaultConfig { minSdk = 31 }
 }

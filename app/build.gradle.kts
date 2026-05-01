@@ -1,24 +1,21 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.qualcomm.qti.objectdetection"
+    namespace = "com.example.efficientdet_lite"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.qualcomm.qti.objectdetection"
+        applicationId = "com.example.efficientdet_lite"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        
-        resValue("string", "tfLiteModelAsset", "detector.tflite")
-        resValue("string", "tfLiteLabelsAsset", "labels.txt")
     }
 
     buildTypes {
@@ -31,59 +28,70 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
-    
     buildFeatures {
-        viewBinding = true
         compose = true
     }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
-    }
-
     androidResources {
         noCompress += "tflite"
     }
-    
     packaging {
         jniLibs {
             useLegacyPackaging = true
         }
     }
+/*
+    bundle {
+        deviceTargetingConfig {
+            config.set(file("device_targeting_configuration.xml"))
+        }
+    }
+*/
+    dynamicFeatures += setOf(
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v69",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v73",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v75",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v79",
+        ":litert_npu_runtime_libraries:qualcomm_runtime_v81"
+    )
+}
+
+tasks.register("prepareKotlinBuildScriptModel") {
+    // Dummy task to satisfy the IDE sync
 }
 
 dependencies {
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("com.google.ai.edge.litert:litert:2.1.4")
-    implementation("org.opencv:opencv:4.10.0")
-    implementation("com.qualcomm.qti:qnn-runtime:2.40.0")
-    implementation("com.qualcomm.qti:qnn-litert-delegate:2.40.0")
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.material)
+    implementation(libs.opencv)
+    implementation(libs.litert)
+    implementation("androidx.compose.material3:material3:1.4.0")
+    implementation("androidx.compose.material3:material3-window-size-class:1.4.0")
+    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.5.0-alpha18")
 
-    // Compose
-    implementation("androidx.activity:activity-compose:1.13.0")
-    implementation(platform("androidx.compose:compose-bom:2025.02.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.navigation:navigation-compose:2.9.8")
-
-    // CameraX
-    val cameraVersion = "1.6.0"
-    implementation("androidx.camera:camera-camera2:$cameraVersion")
-    implementation("androidx.camera:camera-lifecycle:$cameraVersion")
-    implementation("androidx.camera:camera-view:$cameraVersion")
-
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(project(":litert_npu_runtime_libraries:runtime_strings"))
+    testImplementation(libs.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }
-
-tasks.register("prepareKotlinBuildScriptModel") {}

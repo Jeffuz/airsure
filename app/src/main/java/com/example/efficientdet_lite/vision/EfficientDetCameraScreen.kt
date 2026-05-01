@@ -58,7 +58,7 @@ fun EfficientDetCameraScreen(selectedCountry: String = "United States") {
     }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     val inferenceExecutor = remember { Executors.newSingleThreadExecutor() }
-    
+
     val detector = remember {
         ObjectDetection(
             context,
@@ -67,7 +67,7 @@ fun EfficientDetCameraScreen(selectedCountry: String = "United States") {
             AIHubDefaults.acceleratorPriorityOrder
         )
     }
-    
+
     val tracker = remember { DetectionTracker() }
     var result by remember { mutableStateOf(EfficientDetFrameResult()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -107,12 +107,6 @@ fun EfficientDetCameraScreen(selectedCountry: String = "United States") {
         }
     }
 
-    DisposableEffect(analyzer) {
-        onDispose {
-            analyzer.close()
-        }
-    }
-
     DisposableEffect(Unit) {
         onDispose {
             ProcessCameraProvider.getInstance(context).get().unbindAll()
@@ -136,6 +130,7 @@ fun EfficientDetCameraScreen(selectedCountry: String = "United States") {
                     val preview = Preview.Builder().build().also {
                         it.setSurfaceProvider(previewView.surfaceProvider)
                     }
+
                     val imageAnalysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
