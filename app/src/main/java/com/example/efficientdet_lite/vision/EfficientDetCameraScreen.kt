@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -40,13 +42,17 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.qualcomm.qti.objectdetection.RestrictionManager
 import com.qualcomm.qti.objectdetection.ObjectDetection
 import com.qualcomm.qti.objectdetection.ObjectDetectionAnalyzer
 import com.qualcomm.tflite.AIHubDefaults
 import java.util.concurrent.Executors
 
 @Composable
-fun EfficientDetCameraScreen(selectedCountry: String = "United States") {
+fun EfficientDetCameraScreen(
+    selectedCountry: String = "United States",
+    onSubmit: (List<Pair<String, RestrictionManager.TravelInfo?>>) -> Unit = {}
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
@@ -202,16 +208,17 @@ fun EfficientDetCameraScreen(selectedCountry: String = "United States") {
         ) {
             Button(
                 onClick = {
-                    lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
-                        CameraSelector.LENS_FACING_FRONT
-                    } else {
-                        CameraSelector.LENS_FACING_BACK
-                    }
+                    val currentItems = result.detections.map { it.label to it.travelInfo }
+                    onSubmit(currentItems)
                 },
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(56.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text(if (lensFacing == CameraSelector.LENS_FACING_BACK) "Rear" else "Front")
+                Text("Submit", style = MaterialTheme.typography.titleMedium)
             }
-            Spacer(Modifier.width(12.dp))
+
             errorMessage?.let {
                 Surface(color = Color.Black.copy(alpha = 0.65f), shape = MaterialTheme.shapes.small) {
                     Text(
