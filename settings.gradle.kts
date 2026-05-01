@@ -22,7 +22,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "EfficientDET-Lite"
+rootProject.name = "AIRsure"
 include(":app")
 
 // LiteRT Qualcomm NPU runtime deployment modules.

@@ -12,14 +12,23 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,10 +48,18 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.qualcomm.qti.objectdetection.RestrictionManager
+import com.qualcomm.qti.objectdetection.ObjectDetection
+import com.qualcomm.qti.objectdetection.ObjectDetectionAnalyzer
+import com.qualcomm.tflite.AIHubDefaults
 import java.util.concurrent.Executors
 
 @Composable
-fun EfficientDetCameraScreen() {
+fun EfficientDetCameraScreen(
+    selectedCountry: String = "United States",
+    onItemDetected: (List<Pair<String, RestrictionManager.TravelInfo?>>) -> Unit = {},
+    onSubmit: () -> Unit = {}
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
@@ -54,29 +71,58 @@ fun EfficientDetCameraScreen() {
     }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     val inferenceExecutor = remember { Executors.newSingleThreadExecutor() }
-    val detector = remember { EfficientDetDetector(context) }
+
+    val detector = remember {
+        ObjectDetection(
+            context,
+            "detector.tflite",
+            "labels.txt",
+            AIHubDefaults.acceleratorPriorityOrder
+        )
+    }
+
     val tracker = remember { DetectionTracker() }
     var result by remember { mutableStateOf(EfficientDetFrameResult()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val analyzer = remember(detector, selectedCountry) {
+        ObjectDetectionAnalyzer(
+            context = context,
+            detector = detector,
+            inferenceExecutor = inferenceExecutor,
+            onResult = { frameResult ->
+                mainExecutor.execute {
+                    val trackedDetections = tracker.update(frameResult.detections)
+                    result = frameResult.copy(detections = trackedDetections)
+                    errorMessage = null
+                    
+                    // Automatically report confirmed detections back for saving
+                    if (trackedDetections.isNotEmpty()) {
+                        onItemDetected(trackedDetections.map { it.label to it.travelInfo })
+                    }
+                }
+            },
+            onError = { throwable ->
+                Log.e(TAG, "Camera inference error", throwable)
+                mainExecutor.execute {
+                    errorMessage = throwable.message ?: throwable::class.java.simpleName
+                }
+            },
+            selectedCountry = selectedCountry
+        )
+    }
+
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     var hasCameraPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
-    var hasAudioPermission by remember {
-        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
-    }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
-        hasCameraPermission = results[Manifest.permission.CAMERA] ?: hasCameraPermission
-        hasAudioPermission = results[Manifest.permission.RECORD_AUDIO] ?: hasAudioPermission
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        hasCameraPermission = isGranted
     }
 
     LaunchedEffect(Unit) {
-        val permissionsToRequest = mutableListOf<String>()
-        if (!hasCameraPermission) permissionsToRequest.add(Manifest.permission.CAMERA)
-        if (!hasAudioPermission) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
-        
-        if (permissionsToRequest.isNotEmpty()) {
-            permissionLauncher.launch(permissionsToRequest.toTypedArray())
+        if (!hasCameraPermission) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -89,7 +135,7 @@ fun EfficientDetCameraScreen() {
         }
     }
 
-    DisposableEffect(hasCameraPermission, lensFacing) {
+    DisposableEffect(hasCameraPermission, lensFacing, analyzer) {
         if (!hasCameraPermission) {
             onDispose { }
         } else {
@@ -103,22 +149,7 @@ fun EfficientDetCameraScreen() {
                     val preview = Preview.Builder().build().also {
                         it.setSurfaceProvider(previewView.surfaceProvider)
                     }
-                    val analyzer = EfficientDetAnalyzer(
-                        detector = detector,
-                        inferenceExecutor = inferenceExecutor,
-                        onResult = { frameResult ->
-                            mainExecutor.execute {
-                                result = frameResult.copy(detections = tracker.update(frameResult.detections))
-                                errorMessage = null
-                            }
-                        },
-                        onError = { throwable ->
-                            Log.e(TAG, "Camera inference error", throwable)
-                            mainExecutor.execute {
-                                errorMessage = throwable.message ?: throwable::class.java.simpleName
-                            }
-                        },
-                    )
+
                     val imageAnalysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
@@ -173,21 +204,25 @@ fun EfficientDetCameraScreen() {
                 .statusBarsPadding()
                 .padding(top = 12.dp),
         ) {
-            Text(
-                text = "Backend: ${result.backend.ifBlank { detector.selectedBackend }}",
-                color = Color.White,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Destination: $selectedCountry",
+                    color = Color(0xFFADD8E6),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                )
+            }
         }
 
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 24.dp),
+                .padding(bottom = 24.dp)
+                .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Button(
+            IconButton(
                 onClick = {
                     lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
                         CameraSelector.LENS_FACING_FRONT
@@ -195,10 +230,36 @@ fun EfficientDetCameraScreen() {
                         CameraSelector.LENS_FACING_BACK
                     }
                 },
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
             ) {
-                Text(if (lensFacing == CameraSelector.LENS_FACING_BACK) "Rear" else "Front")
+                Icon(
+                    imageVector = Icons.Default.FlipCameraAndroid,
+                    contentDescription = "Flip Camera",
+                    tint = Color.White
+                )
             }
-            Spacer(Modifier.width(12.dp))
+
+            Spacer(Modifier.weight(1f))
+
+            Button(
+                onClick = {
+                    onSubmit()
+                },
+                modifier = Modifier
+                    .height(56.dp)
+                    .weight(2f),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text("Submit", style = MaterialTheme.typography.titleMedium)
+            }
+
+            Spacer(Modifier.weight(1f))
+            
+            // Placeholder for symmetry or future use
+            Box(Modifier.size(56.dp))
+
             errorMessage?.let {
                 Surface(color = Color.Black.copy(alpha = 0.65f), shape = MaterialTheme.shapes.small) {
                     Text(

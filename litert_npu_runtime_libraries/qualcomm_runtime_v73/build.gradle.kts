@@ -1,4 +1,4 @@
-plugins { id("com.android.dynamic-feature") }
+plugins { alias(libs.plugins.android.dynamic.feature) }
 
 android {
   namespace = "com.google.ai.edge.litert.qualcomm_runtime.v73"

@@ -54,8 +54,8 @@ import androidx.compose.material.icons.outlined.Luggage
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.QrCodeScanner
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -69,16 +69,13 @@ private val Blue = Color(0xFF1F6BFF)
 private val LightBlue = Color(0xFFEAF3FF)
 private val BorderBlue = Color(0xFFCFE0FF)
 private val Green = Color(0xFF14866D)
-private val SoftGreen = Color(0xFFEFFAF6)
-private val Red = Color(0xFFFF5A4F)
-private val SoftRed = Color(0xFFFFF1F1)
-private val SoftYellow = Color(0xFFFFF7E6)
 
 @Composable
 fun HomeScreen(
     tripDetails: TripDetails,
     onScanCarryOnClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
+    onRecentSubmissionsClick: () -> Unit,
     onBoardingPassClick: () -> Unit
 ) {
     Box(
@@ -168,10 +165,11 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            RecentAlertsCard()
+            RecentSubmissionsCard(onClick = onRecentSubmissionsClick)
         }
 
-        BottomNavMock(
+        BottomNavBar(
+            activeRoute = "home",
             modifier = Modifier.align(Alignment.BottomCenter),
             onHomeClick = { },
             onScanClick = onScanCarryOnClick,
@@ -430,6 +428,8 @@ private fun TravelInfoColumn(
         modifier = modifier.padding(horizontal = 6.dp),
         verticalArrangement = Arrangement.Center
     ) {
+        val MutedGray = Color(0xFF7D87A2)
+        val LabelGray = Color(0xFF8D96AE)
         Text(
             text = label,
             color = LabelGray,
@@ -482,6 +482,8 @@ private fun FeatureCard(
     background: Brush,
     onClick: () -> Unit
 ) {
+    val BorderBlue = Color(0xFFCFE0FF)
+    val LogoNavy = Color(0xFF13235E)
     Card(
         modifier = modifier
             .height(194.dp)
@@ -550,9 +552,11 @@ private fun FeatureCard(
 }
 
 @Composable
-private fun RecentAlertsCard() {
+private fun RecentSubmissionsCard(onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -573,7 +577,7 @@ private fun RecentAlertsCard() {
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Text(
-                    text = "Recent alerts",
+                    text = "Recent submissions",
                     color = Color(0xFF17245D),
                     fontSize = 18.sp,
                     lineHeight = 22.sp,
@@ -583,7 +587,7 @@ private fun RecentAlertsCard() {
                 )
 
                 Text(
-                    text = "View all  ›",
+                    text = "View list  ›",
                     color = Color(0xFF2A71FF),
                     fontSize = 15.sp,
                     lineHeight = 20.sp,
@@ -593,7 +597,11 @@ private fun RecentAlertsCard() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-
+            Text(
+                text = "View items you've previously scanned for carry-on compliance.",
+                color = Color(0xFF6D7898),
+                fontSize = 14.sp
+            )
         }
     }
 }
@@ -633,6 +641,7 @@ private fun AlertRow(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val Red = Color(0xFFFF5A4F)
                 if (badge != null) {
                     Text(
                         text = badge,
@@ -699,117 +708,6 @@ private fun AlertRow(
             text = "›",
             color = Color(0xFF6B7592),
             fontSize = 30.sp
-        )
-    }
-}
-
-@Composable
-private fun BottomNavMock(
-    modifier: Modifier = Modifier,
-    onHomeClick: () -> Unit,
-    onScanClick: () -> Unit,
-    onListenClick: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .navigationBarsPadding()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 34.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomNavIndicator(active = true, modifier = Modifier.weight(1f))
-            BottomNavIndicator(active = false, modifier = Modifier.weight(1f))
-            BottomNavIndicator(active = false, modifier = Modifier.weight(1f))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 34.dp)
-                .padding(top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                label = "Home",
-                icon = Icons.Outlined.Home,
-                active = true,
-                onClick = onHomeClick
-            )
-
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                label = "Scan",
-                icon = Icons.Outlined.QrCodeScanner,
-                active = false,
-                onClick = onScanClick
-            )
-
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                label = "Listen",
-                icon = Icons.Outlined.Mic,
-                active = false,
-                onClick = onListenClick
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomNavIndicator(
-    active: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .width(46.dp)
-                .height(3.dp)
-                .clip(RoundedCornerShape(999.dp))
-                .background(if (active) Blue else Color.Transparent)
-        )
-    }
-}
-
-@Composable
-private fun BottomNavItem(
-    modifier: Modifier = Modifier,
-    label: String,
-    icon: ImageVector,
-    active: Boolean,
-    onClick: () -> Unit
-) {
-    val itemColor = if (active) Blue else Color(0xFF7F88A2)
-
-    Column(
-        modifier = modifier.clickable { onClick() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = itemColor,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = label,
-            color = itemColor,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontWeight = if (active) FontWeight.Medium else FontWeight.Normal
         )
     }
 }

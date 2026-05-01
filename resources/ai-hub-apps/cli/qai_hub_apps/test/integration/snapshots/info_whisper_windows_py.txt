@@ -1,0 +1,16 @@
+Whisper Windows
+══════════════════════════════════════════════════
+
+ID:         whisper_windows_py
+Type:       windows
+Runtime:    onnx
+Domain:     Audio
+Use Case:   Speech Recognition
+Precisions: float
+Models:     whisper_base
+
+Speech to text on Windows
+
+Run Whisper on-device using ONNX.
+
+Repo:  https://github.com/qualcomm/ai-hub-apps/tree/main/apps/whisper_windows_py

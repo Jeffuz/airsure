@@ -1,11 +1,14 @@
 package com.example.efficientdet_lite.vision
 
 import android.graphics.RectF
+import com.qualcomm.qti.objectdetection.RestrictionManager
 
 data class Detection(
     val box: RectF,
     val label: String,
     val confidence: Float,
+    val travelInfo: RestrictionManager.TravelInfo? = null,
+    val classIdx: Int = 0
 )
 
 data class FrameMetadata(
