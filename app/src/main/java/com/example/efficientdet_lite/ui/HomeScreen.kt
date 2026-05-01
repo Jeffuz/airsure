@@ -41,10 +41,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.R
+import com.example.efficientdet_lite.app.TripDetails
 
 // icons
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ConfirmationNumber
@@ -54,13 +54,11 @@ import androidx.compose.material.icons.outlined.Luggage
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.QrCodeScanner
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.example.efficientdet_lite.announcements.FlightViewModel
-import com.example.efficientdet_lite.announcements.UserFlight
 
 private val Navy = Color(0xFF0D1B5E)
 private val LogoNavy = Color(0xFF13235E)
@@ -71,20 +69,15 @@ private val Blue = Color(0xFF1F6BFF)
 private val LightBlue = Color(0xFFEAF3FF)
 private val BorderBlue = Color(0xFFCFE0FF)
 private val Green = Color(0xFF14866D)
-private val SoftGreen = Color(0xFFEFFAF6)
-private val Red = Color(0xFFFF5A4F)
-private val SoftRed = Color(0xFFFFF1F1)
-private val SoftYellow = Color(0xFFFFF7E6)
 
 @Composable
 fun HomeScreen(
-    flightViewModel: FlightViewModel,
+    tripDetails: TripDetails,
     onScanCarryOnClick: () -> Unit,
-    onAnnouncementsClick: () -> Unit
+    onAnnouncementsClick: () -> Unit,
+    onRecentSubmissionsClick: () -> Unit,
+    onBoardingPassClick: () -> Unit
 ) {
-    val userFlight = flightViewModel.userFlight
-    val activeAlert = flightViewModel.activeAlert
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -135,20 +128,8 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(30.dp))
 
             BoardingPassCard(
-                userFlight = userFlight,
-                onAddScanClick = {
-                    // Pre-fill for demo purposes if empty
-                    if (userFlight == null) {
-                        flightViewModel.updateFlightInfo(
-                            UserFlight(
-                                flightNumber = "AA123",
-                                from = "LAX",
-                                to = "JFK",
-                                gate = "A12"
-                            )
-                        )
-                    }
-                }
+                tripDetails = tripDetails,
+                onClick = onBoardingPassClick
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -184,13 +165,11 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            RecentAlertsCard(
-                activeAlert = activeAlert,
-                onClearAlert = { flightViewModel.clearAlert() }
-            )
+            RecentSubmissionsCard(onClick = onRecentSubmissionsClick)
         }
 
-        BottomNavMock(
+        BottomNavBar(
+            activeRoute = "home",
             modifier = Modifier.align(Alignment.BottomCenter),
             onHomeClick = { },
             onScanClick = onScanCarryOnClick,
@@ -270,11 +249,13 @@ private fun HomeHeader() {
 
 @Composable
 private fun BoardingPassCard(
-    userFlight: UserFlight?,
-    onAddScanClick: () -> Unit
+    tripDetails: TripDetails,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
         border = BorderStroke(1.dp, BorderBlue),
         colors = CardDefaults.cardColors(
@@ -321,7 +302,7 @@ private fun BoardingPassCard(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = if (userFlight == null) "Add your trip to get personalized alerts." else "Your trip is active and being monitored.",
+                        text = "Add your trip to get personalized alerts.",
                         color = Color(0xFF6F7A99),
                         fontSize = 14.sp,
                         lineHeight = 20.sp,
@@ -334,12 +315,11 @@ private fun BoardingPassCard(
                         .clip(RoundedCornerShape(14.dp))
                         .background(Color.White)
                         .border(1.dp, BorderBlue, RoundedCornerShape(14.dp))
-                        .clickable { onAddScanClick() }
                         .padding(horizontal = 18.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (userFlight == null) "Add / Scan" else "Update",
+                        text = "Add / Scan",
                         color = Blue,
                         fontSize = 16.sp,
                         lineHeight = 20.sp,
@@ -366,62 +346,44 @@ private fun BoardingPassCard(
             ) {
                 TravelInfoColumn(
                     label = "FROM",
-                    value = userFlight?.from ?: "-",
-                    subtitle = if (userFlight != null) "Departure" else "-",
-                    modifier = Modifier.weight(1f)
+                    value = tripDetails.from.ifBlank { "—" },
+                    subtitle = if (tripDetails.from.isBlank()) "Not set" else "Origin",
+                    modifier = Modifier.weight(0.8f)
                 )
-
-                DividerLine()
-
-                Box(
-                    modifier = Modifier
-                        .width(52.dp)
-                        .fillMaxHeight(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Flight,
-                        contentDescription = null,
-                        tint = Color(0xFFB7C2D8),
-                        modifier = Modifier
-                            .size(18.dp)
-                            .rotate(90f)
-                    )
-                }
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "TO",
-                    value = userFlight?.to ?: "-",
-                    subtitle = if (userFlight != null) "Arrival" else "-",
-                    modifier = Modifier.weight(1f)
+                    value = tripDetails.to.ifBlank { "—" },
+                    subtitle = if (tripDetails.to.isBlank()) "Not set" else "Destination",
+                    modifier = Modifier.weight(0.8f)
                 )
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "DATE",
-                    value = if (userFlight != null) "TODAY" else "-",
-                    subtitle = if (userFlight != null) "May 15" else "-",
-                    modifier = Modifier.weight(1.15f)
+                    value = tripDetails.date.ifBlank { "—" },
+                    subtitle = if (tripDetails.date.isBlank()) "Not set" else "Trip date",
+                    modifier = Modifier.weight(0.8f)
                 )
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "FLIGHT",
-                    value = userFlight?.flightNumber ?: "—",
-                    subtitle = if (userFlight != null) "Direct" else "—",
-                    modifier = Modifier.weight(0.9f)
+                    value = tripDetails.flight.ifBlank { "—" },
+                    subtitle = if (tripDetails.flight.isBlank()) "Not set" else "Flight",
+                    modifier = Modifier.weight(0.8f)
                 )
 
                 DividerLine()
 
                 TravelInfoColumn(
                     label = "GATE",
-                    value = userFlight?.gate ?: "—",
-                    subtitle = if (userFlight != null) "Boarding" else "—",
+                    value = tripDetails.gate.ifBlank { "—" },
+                    subtitle = if (tripDetails.gate.isBlank()) "Pending" else "Gate",
                     modifier = Modifier.weight(0.8f)
                 )
             }
@@ -466,6 +428,8 @@ private fun TravelInfoColumn(
         modifier = modifier.padding(horizontal = 6.dp),
         verticalArrangement = Arrangement.Center
     ) {
+        val MutedGray = Color(0xFF7D87A2)
+        val LabelGray = Color(0xFF8D96AE)
         Text(
             text = label,
             color = LabelGray,
@@ -518,6 +482,8 @@ private fun FeatureCard(
     background: Brush,
     onClick: () -> Unit
 ) {
+    val BorderBlue = Color(0xFFCFE0FF)
+    val LogoNavy = Color(0xFF13235E)
     Card(
         modifier = modifier
             .height(194.dp)
@@ -586,15 +552,14 @@ private fun FeatureCard(
 }
 
 @Composable
-private fun RecentAlertsCard(
-    activeAlert: com.example.efficientdet_lite.announcements.FlightAnnouncement?,
-    onClearAlert: () -> Unit
-) {
+private fun RecentSubmissionsCard(onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -612,7 +577,7 @@ private fun RecentAlertsCard(
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Text(
-                    text = "Recent alerts",
+                    text = "Recent submissions",
                     color = Color(0xFF17245D),
                     fontSize = 18.sp,
                     lineHeight = 22.sp,
@@ -621,46 +586,22 @@ private fun RecentAlertsCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                if (activeAlert != null) {
-                    Text(
-                        text = "Clear",
-                        color = Color(0xFF2A71FF),
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.clickable { onClearAlert() }
-                    )
-                }
+                Text(
+                    text = "View list  ›",
+                    color = Color(0xFF2A71FF),
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (activeAlert != null) {
-                val icon = when (activeAlert.type) {
-                    com.example.efficientdet_lite.announcements.AnnouncementType.GATE_CHANGE -> "🔄"
-                    com.example.efficientdet_lite.announcements.AnnouncementType.BOARDING -> "✈️"
-                    com.example.efficientdet_lite.announcements.AnnouncementType.DELAY -> "⏳"
-                    com.example.efficientdet_lite.announcements.AnnouncementType.FINAL_CALL -> "📢"
-                    else -> "🔔"
-                }
-
-                AlertRow(
-                    icon = icon,
-                    iconBg = SoftYellow,
-                    badge = if (activeAlert.type == com.example.efficientdet_lite.announcements.AnnouncementType.GATE_CHANGE) "URGENT" else null,
-                    time = "Just now",
-                    headline = "${activeAlert.type.name.replace("_", " ")}: ",
-                    body = activeAlert.rawTranscript,
-                    meta = "Flight ${activeAlert.matchedFlightNumber}"
-                )
-            } else {
-                Text(
-                    text = "No recent alerts for your flight.",
-                    color = BodyGray,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
+            Text(
+                text = "View items you've previously scanned for carry-on compliance.",
+                color = Color(0xFF6D7898),
+                fontSize = 14.sp
+            )
         }
     }
 }
@@ -700,6 +641,7 @@ private fun AlertRow(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val Red = Color(0xFFFF5A4F)
                 if (badge != null) {
                     Text(
                         text = badge,
@@ -766,117 +708,6 @@ private fun AlertRow(
             text = "›",
             color = Color(0xFF6B7592),
             fontSize = 30.sp
-        )
-    }
-}
-
-@Composable
-private fun BottomNavMock(
-    modifier: Modifier = Modifier,
-    onHomeClick: () -> Unit,
-    onScanClick: () -> Unit,
-    onListenClick: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .navigationBarsPadding()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 34.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomNavIndicator(active = true, modifier = Modifier.weight(1f))
-            BottomNavIndicator(active = false, modifier = Modifier.weight(1f))
-            BottomNavIndicator(active = false, modifier = Modifier.weight(1f))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 34.dp)
-                .padding(top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                label = "Home",
-                icon = Icons.Outlined.Home,
-                active = true,
-                onClick = onHomeClick
-            )
-
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                label = "Scan",
-                icon = Icons.Outlined.QrCodeScanner,
-                active = false,
-                onClick = onScanClick
-            )
-
-            BottomNavItem(
-                modifier = Modifier.weight(1f),
-                label = "Listen",
-                icon = Icons.Outlined.Mic,
-                active = false,
-                onClick = onListenClick
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomNavIndicator(
-    active: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .width(46.dp)
-                .height(3.dp)
-                .clip(RoundedCornerShape(999.dp))
-                .background(if (active) Blue else Color.Transparent)
-        )
-    }
-}
-
-@Composable
-private fun BottomNavItem(
-    modifier: Modifier = Modifier,
-    label: String,
-    icon: ImageVector,
-    active: Boolean,
-    onClick: () -> Unit
-) {
-    val itemColor = if (active) Blue else Color(0xFF7F88A2)
-
-    Column(
-        modifier = modifier.clickable { onClick() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = itemColor,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = label,
-            color = itemColor,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontWeight = if (active) FontWeight.Medium else FontWeight.Normal
         )
     }
 }
