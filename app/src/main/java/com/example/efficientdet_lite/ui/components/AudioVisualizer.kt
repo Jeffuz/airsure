@@ -148,8 +148,20 @@ fun AudioVisualizer(viewModel: AudioDebugViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedButton(onClick = { viewModel.runAssetTest() }) {
-            Text("Run Asset (.wav) Test")
+        OutlinedButton(onClick = { viewModel.runAssetTest("aa123_boarding.wav") }) {
+            Text("Test: AA123 Boarding")
+        }
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        OutlinedButton(onClick = { viewModel.runAssetTest("aa123_gate_change.wav") }) {
+            Text("Test: AA123 Gate Change")
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        OutlinedButton(onClick = { viewModel.runAssetTest("aa123_delay.wav") }) {
+            Text("Test: AA123 Delay")
         }
 
         Spacer(modifier = Modifier.height(8.dp))

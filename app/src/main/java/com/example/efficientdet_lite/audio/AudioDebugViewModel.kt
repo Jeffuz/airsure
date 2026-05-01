@@ -148,11 +148,14 @@ class AudioDebugViewModel(application: Application) : AndroidViewModel(applicati
         transcription = "Stopped."
     }
 
-    fun runAssetTest() {
+    fun runAssetTest(fileName: String = "test_audio.wav") {
         viewModelScope.launch(Dispatchers.Default) {
             activeAlert = null
-            withContext(Dispatchers.Main) { transcription = "Running asset test..." }
-            val result = whisperModel.transcribeFromAsset("test_audio.wav")
+            withContext(Dispatchers.Main) { transcription = "Running $fileName..." }
+            
+            // Look in the 'audio/' subfolder
+            val path = if (fileName == "test_audio.wav") fileName else "audio/$fileName"
+            val result = whisperModel.transcribeFromAsset(path)
             handleTranscript(result)
         }
     }
