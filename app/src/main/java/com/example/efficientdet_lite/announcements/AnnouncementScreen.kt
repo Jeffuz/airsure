@@ -36,10 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.app.TripDetails
 
+
 @Composable
 fun AnnouncementScreen(
     onBackClick: () -> Unit,
-    tripDetails: TripDetails
+    tripDetails: TripDetails,
+    onBoardingPassClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -53,9 +55,16 @@ fun AnnouncementScreen(
                 )
             )
     ) {
-        AudioDebugScreen(
-            tripDetails = tripDetails
-        )
+        if (tripDetails.flight.isBlank()) {
+            MissingFlightCodeState(
+                modifier = Modifier.align(Alignment.Center),
+                onBoardingPassClick = onBoardingPassClick
+            )
+        } else {
+            AudioDebugScreen(
+                tripDetails = tripDetails
+            )
+        }
 
         AnnouncementTopBar(
             modifier = Modifier
@@ -65,6 +74,77 @@ fun AnnouncementScreen(
                 .padding(top = 14.dp),
             onBackClick = onBackClick
         )
+    }
+}
+
+@Composable
+private fun MissingFlightCodeState(
+    modifier: Modifier = Modifier,
+    onBoardingPassClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 28.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color.White)
+            .border(
+                width = 1.dp,
+                color = Color(0xFFE0E7F5),
+                shape = RoundedCornerShape(28.dp)
+            )
+            .padding(horizontal = 24.dp, vertical = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(58.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFEAF3FF)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Mic,
+                contentDescription = null,
+                tint = Color(0xFF1F6BFF),
+                modifier = Modifier.size(30.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.padding(top = 18.dp))
+
+        Text(
+            text = "Flight code required",
+            color = Color(0xFF13235E),
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.padding(top = 8.dp))
+
+        Text(
+            text = "Enter your boarding pass information before using Flight Alerts. Only the flight code is required.",
+            color = Color(0xFF6D7898),
+            fontSize = 15.sp,
+            lineHeight = 21.sp
+        )
+
+        Spacer(modifier = Modifier.padding(top = 22.dp))
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(999.dp))
+                .background(Color(0xFF1F6BFF))
+                .clickable { onBoardingPassClick() }
+                .padding(horizontal = 22.dp, vertical = 13.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Enter boarding pass",
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
     }
 }
 

@@ -111,7 +111,10 @@ fun AirSureNavHost() {
                 onBackClick = {
                     navController.popBackStack()
                 },
-                tripDetails = tripDetails
+                tripDetails = tripDetails,
+                onBoardingPassClick = {
+                    navController.navigate(Routes.BOARDING_PASS)
+                }
             )
         }
 

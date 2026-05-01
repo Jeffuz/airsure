@@ -63,15 +63,7 @@ class AudioDebugViewModel(
         private set
 
     private val currentTrip: TripDetails
-        get() = if (tripDetails.flight.isNotBlank()) {
-            tripDetails
-        } else {
-            TripDetails(
-                from = "LAX",
-                to = "JFK",
-                flight = "AA123"
-            )
-        }
+        get() = tripDetails
 
     private val audioBuffer = mutableListOf<Float>()
     private var lastSpeechTime = 0L
