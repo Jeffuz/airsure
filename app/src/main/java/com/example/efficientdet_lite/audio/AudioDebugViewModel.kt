@@ -50,6 +50,18 @@ class AudioDebugViewModel(
     var isAILoaded by mutableStateOf(false)
         private set
 
+    var isLoadingAI by mutableStateOf(false)
+        private set
+
+    var loadingMessage by mutableStateOf("Preparing local announcement AI...")
+        private set
+
+    var loadingProgress by mutableStateOf(0f)
+        private set
+
+    var loadError by mutableStateOf<String?>(null)
+        private set
+
     val activeAlert get() = flightViewModel.activeAlert
 
     // Helper to get flight info from global state
@@ -62,18 +74,66 @@ class AudioDebugViewModel(
     // --- Core Logic ---
 
     fun loadAI() {
+        if (isAILoaded || isLoadingAI) return
+
         viewModelScope.launch {
+            isLoadingAI = true
+            loadError = null
+            loadingMessage = "Preparing local announcement AI..."
+            loadingProgress = 0.05f
+
             try {
                 whisperModel.loadModels { progress ->
-                    transcription = progress
+                    updateLoadingState(progress)
                 }
+
                 isAILoaded = whisperModel.isLoaded
+
+                if (isAILoaded) {
+                    transcription = "Ready to listen."
+                    loadingMessage = "AI ready"
+                    loadingProgress = 1f
+                }
             } catch (e: Exception) {
                 Log.e("AudioDebug", "Failed to load models", e)
+                loadError = e.message ?: "Unknown error"
                 transcription = "Error: ${e.message}"
+                loadingMessage = "Failed to load local AI"
             } catch (e: Error) {
                 Log.e("AudioDebug", "Critical error", e)
+                loadError = "OOM / Critical Error"
                 transcription = "OOM / Critical Error"
+                loadingMessage = "Not enough memory to load model"
+            } finally {
+                isLoadingAI = false
+            }
+        }
+    }
+
+    private fun updateLoadingState(rawProgress: String) {
+        when {
+            rawProgress.startsWith("1/3") -> {
+                loadingMessage = "Preparing tokenizer..."
+                loadingProgress = 0.33f
+            }
+            rawProgress.startsWith("2/3") -> {
+                loadingMessage = "Loading decoder..."
+                loadingProgress = 0.66f
+            }
+            rawProgress.startsWith("3/3") -> {
+                loadingMessage = "Loading encoder..."
+                loadingProgress = 0.95f
+            }
+            rawProgress == "AI Ready" -> {
+                loadingMessage = "AI ready"
+                loadingProgress = 1f
+            }
+            rawProgress.startsWith("Fail:") || rawProgress.startsWith("Error:") -> {
+                loadingMessage = rawProgress
+                loadError = rawProgress
+            }
+            else -> {
+                loadingMessage = rawProgress
             }
         }
     }
