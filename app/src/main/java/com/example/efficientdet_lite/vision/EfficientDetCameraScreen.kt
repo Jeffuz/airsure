@@ -62,13 +62,21 @@ fun EfficientDetCameraScreen() {
     var hasCameraPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        hasCameraPermission = granted
+    var hasAudioPermission by remember {
+        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+        hasCameraPermission = results[Manifest.permission.CAMERA] ?: hasCameraPermission
+        hasAudioPermission = results[Manifest.permission.RECORD_AUDIO] ?: hasAudioPermission
     }
 
     LaunchedEffect(Unit) {
-        if (!hasCameraPermission) {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
+        val permissionsToRequest = mutableListOf<String>()
+        if (!hasCameraPermission) permissionsToRequest.add(Manifest.permission.CAMERA)
+        if (!hasAudioPermission) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        
+        if (permissionsToRequest.isNotEmpty()) {
+            permissionLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 
@@ -154,6 +162,8 @@ fun EfficientDetCameraScreen() {
                 modifier = Modifier.align(Alignment.Center),
             )
         }
+
+        // Audio Debug UI removed for independent testing
 
         Surface(
             color = Color.Black.copy(alpha = 0.55f),

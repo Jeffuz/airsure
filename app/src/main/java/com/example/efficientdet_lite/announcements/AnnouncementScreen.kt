@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.efficientdet_lite.vision.EfficientDetCameraScreen
+import com.example.efficientdet_lite.audio.AudioDebugScreen
 
 @Composable
 fun CarryOnScannerScreen(
@@ -33,7 +34,6 @@ fun AnnouncementScreen(
         Button(onClick = onBackClick) {
             Text("Back")
         }
-
-        Text("Announcement Listener Placeholder")
+        AudioDebugScreen()
     }
 }
