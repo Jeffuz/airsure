@@ -20,9 +20,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,7 +57,8 @@ import java.util.concurrent.Executors
 @Composable
 fun EfficientDetCameraScreen(
     selectedCountry: String = "United States",
-    onSubmit: (List<Pair<String, RestrictionManager.TravelInfo?>>) -> Unit = {}
+    onItemDetected: (List<Pair<String, RestrictionManager.TravelInfo?>>) -> Unit = {},
+    onSubmit: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -85,8 +92,14 @@ fun EfficientDetCameraScreen(
             inferenceExecutor = inferenceExecutor,
             onResult = { frameResult ->
                 mainExecutor.execute {
-                    result = frameResult.copy(detections = tracker.update(frameResult.detections))
+                    val trackedDetections = tracker.update(frameResult.detections)
+                    result = frameResult.copy(detections = trackedDetections)
                     errorMessage = null
+                    
+                    // Automatically report confirmed detections back for saving
+                    if (trackedDetections.isNotEmpty()) {
+                        onItemDetected(trackedDetections.map { it.label to it.travelInfo })
+                    }
                 }
             },
             onError = { throwable ->
@@ -203,21 +216,47 @@ fun EfficientDetCameraScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 24.dp),
+                .padding(bottom = 24.dp)
+                .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Button(
+            IconButton(
                 onClick = {
-                    val currentItems = result.detections.map { it.label to it.travelInfo }
-                    onSubmit(currentItems)
+                    lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                        CameraSelector.LENS_FACING_FRONT
+                    } else {
+                        CameraSelector.LENS_FACING_BACK
+                    }
                 },
                 modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(56.dp),
+                    .size(56.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FlipCameraAndroid,
+                    contentDescription = "Flip Camera",
+                    tint = Color.White
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            Button(
+                onClick = {
+                    onSubmit()
+                },
+                modifier = Modifier
+                    .height(56.dp)
+                    .weight(2f),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text("Submit", style = MaterialTheme.typography.titleMedium)
             }
+
+            Spacer(Modifier.weight(1f))
+            
+            // Placeholder for symmetry or future use
+            Box(Modifier.size(56.dp))
 
             errorMessage?.let {
                 Surface(color = Color.Black.copy(alpha = 0.65f), shape = MaterialTheme.shapes.small) {

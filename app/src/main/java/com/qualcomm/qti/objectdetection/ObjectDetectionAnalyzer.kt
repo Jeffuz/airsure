@@ -60,8 +60,10 @@ class ObjectDetectionAnalyzer(
                 detector.predict(bitmap, 90, bbList)
 
                 var dangerDetected = false
-                val detections = bbList.map { box ->
-                    val info = RestrictionManager.getRestriction(box.label, selectedCountry)
+                val detections = bbList
+                    .filter { (it.label ?: "").lowercase().trim() != "person" }
+                    .map { box ->
+                        val info = RestrictionManager.getRestriction(box.label, selectedCountry)
                     box.travelInfo = info
                     
                     if (info.level == RestrictionManager.Level.DANGER) {

@@ -10,13 +10,15 @@ import com.qualcomm.qti.objectdetection.RestrictionManager
 @Composable
 fun CarryOnScannerScreen(
     onBackClick: () -> Unit,
-    onSubmitClick: (List<Pair<String, RestrictionManager.TravelInfo?>>) -> Unit
+    onItemDetected: (List<Pair<String, RestrictionManager.TravelInfo?>>) -> Unit,
+    onSubmitClick: () -> Unit
 ) {
     var selectedCountry by remember { mutableStateOf("United States") }
 
     Box(modifier = Modifier.fillMaxSize()) {
         EfficientDetCameraScreen(
             selectedCountry = selectedCountry,
+            onItemDetected = onItemDetected,
             onSubmit = onSubmitClick
         )
     }

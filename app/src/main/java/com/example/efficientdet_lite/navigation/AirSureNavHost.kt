@@ -55,10 +55,13 @@ fun AirSureNavHost() {
                 onBackClick = {
                     navController.popBackStack()
                 },
-                onSubmitClick = { results ->
+                onItemDetected = { results ->
+                    // Dynamically add items as they are detected by the tracker
                     CarryOnRepository.addItems(results)
+                },
+                onSubmitClick = {
+                    // Navigate to details screen which already observes the repository
                     navController.navigate(Routes.ITEM_DETAILS) {
-                        // Avoid multiple instances of details screen
                         popUpTo(Routes.HOME)
                     }
                 }
