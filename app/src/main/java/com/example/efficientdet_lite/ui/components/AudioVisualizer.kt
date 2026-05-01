@@ -82,8 +82,7 @@ fun AudioVisualizer(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 22.dp)
-            .padding(top = 12.dp, bottom = 28.dp)
-            .navigationBarsPadding(),
+            .padding(top = 12.dp, bottom = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(

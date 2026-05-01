@@ -36,13 +36,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.efficientdet_lite.app.TripDetails
 import androidx.compose.material3.Scaffold
+import com.example.efficientdet_lite.ui.BottomNavBar
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 
 @Composable
 fun AnnouncementScreen(
     onBackClick: () -> Unit,
     tripDetails: TripDetails,
-    onBoardingPassClick: () -> Unit
+    onBoardingPassClick: () -> Unit,
+    onHomeClick: () -> Unit,
+    onScanClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -66,6 +70,14 @@ fun AnnouncementScreen(
                         .padding(horizontal = 18.dp)
                         .padding(top = 14.dp, bottom = 10.dp),
                     onBackClick = onBackClick
+                )
+            },
+            bottomBar = {
+                BottomNavBar(
+                    activeRoute = "listen",
+                    onHomeClick = onHomeClick,
+                    onScanClick = onScanClick,
+                    onListenClick = { /* Already here */ }
                 )
             }
         ) { innerPadding ->

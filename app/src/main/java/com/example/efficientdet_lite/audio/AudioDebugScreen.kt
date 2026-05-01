@@ -220,7 +220,6 @@ private fun WhisperLoadingScreen(
 
             Spacer(
                 modifier = Modifier
-                    .navigationBarsPadding()
                     .height(28.dp)
             )
         }

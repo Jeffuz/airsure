@@ -114,6 +114,14 @@ fun AirSureNavHost() {
                 tripDetails = tripDetails,
                 onBoardingPassClick = {
                     navController.navigate(Routes.BOARDING_PASS)
+                },
+                onHomeClick = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
+                onScanClick = {
+                    navController.navigate(Routes.CARRY_ON)
                 }
             )
         }
