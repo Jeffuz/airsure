@@ -3,16 +3,13 @@ package com.example.efficientdet_lite.ui.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Flight
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.NotificationsNone
@@ -57,9 +55,15 @@ private val Red = Color(0xFFE54848)
 @Composable
 fun AudioVisualizer(
     viewModel: AudioDebugViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val animatedAmplitude by animateFloatAsState(targetValue = viewModel.amplitude)
+
+    val isActualTranscription = viewModel.transcription.isNotBlank() &&
+            !viewModel.transcription.contains("Listening", ignoreCase = true) &&
+            !viewModel.transcription.contains("Transcribing", ignoreCase = true) &&
+            !viewModel.transcription.contains("AI is still loading", ignoreCase = true) &&
+            !viewModel.transcription.contains("(No speech detected)", ignoreCase = true)
 
     val statusTitle = when {
         viewModel.transcription.contains("Transcribing", ignoreCase = true) -> "Transcribing announcement"
@@ -80,7 +84,7 @@ fun AudioVisualizer(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 22.dp)
             .padding(top = 12.dp, bottom = 28.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = "Flight Alerts",
@@ -89,7 +93,7 @@ fun AudioVisualizer(
             lineHeight = 34.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = (-0.6).sp,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -111,12 +115,74 @@ fun AudioVisualizer(
             amplitude = animatedAmplitude
         )
 
+        if (isActualTranscription) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TranscriptionCard(
+                text = viewModel.transcription
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         viewModel.activeAlert?.let { alert ->
             AlertCard(
-                alert = alert,
-                onDismiss = { viewModel.clearAlert() }
+                alert = alert
+            ) { viewModel.clearAlert() }
+        }
+    }
+}
+
+@Composable
+private fun TranscriptionCard(
+    text: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, Blue.copy(alpha = 0.2f)),
+        colors = CardDefaults.cardColors(containerColor = LightBlue.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Blue)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "LIVE",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Text(
+                    text = "Announced locally",
+                    color = Blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.2.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = text,
+                color = Navy,
+                fontSize = 17.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -180,6 +246,15 @@ private fun StatusCard(
                         color = BodyGray,
                         fontSize = 14.sp,
                         lineHeight = 20.sp
+                    )
+                }
+
+                if (isRecording) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE54848).copy(alpha = amplitude.coerceIn(0.2f, 1f)))
                     )
                 }
             }
@@ -258,6 +333,18 @@ private fun AlertCard(
                         fontSize = 15.sp,
                         lineHeight = 20.sp,
                         fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                androidx.compose.material3.IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Dismiss",
+                        tint = BodyGray.copy(alpha = 0.6f),
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

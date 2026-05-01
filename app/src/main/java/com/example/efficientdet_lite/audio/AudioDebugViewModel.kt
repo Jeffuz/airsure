@@ -244,9 +244,6 @@ class AudioDebugViewModel(
                         withContext(Dispatchers.Main) { transcription = "Transcribing..." }
                         val result = whisperModel.transcribe(audioData)
                         handleTranscript(result)
-                        withContext(Dispatchers.Main) {
-                            if (isRecording) transcription = "Listening again..."
-                        }
                     }
 
                     withContext(Dispatchers.Main) {
