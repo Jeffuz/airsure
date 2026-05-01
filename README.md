@@ -1,8 +1,8 @@
 # AirSure: AI-Powered Travel Assistant
 
-<img width="888" height="497" alt="Image" src="https://github.com/user-attachments/assets/c46db3d1-3139-4195-b9e6-ae4bb8e732c3" />
-
 AirSure is an advanced Android travel companion that leverages on-device AI to help travelers manage their airport experience. By combining real-time computer vision and local speech processing, AirSure provides automated carry-on size checking and proactive flight alert monitoring.
+
+<img width="888" height="497" alt="Image" src="https://github.com/user-attachments/assets/c46db3d1-3139-4195-b9e6-ae4bb8e732c3" />
 
 ## Key Features
 
