@@ -286,6 +286,22 @@ fun BoardingPassFormScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+                Text(
+                    text = "Reset all fields",
+                    color = Color(0xFF8C94AA),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .clickable {
+                            from = ""
+                            to = ""
+                            date = ""
+                            flight = ""
+                            gate = ""
+                        }
+                        .padding(vertical = 8.dp)
+                )
             }
         }
     }
